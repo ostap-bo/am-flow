@@ -70,8 +70,8 @@ window.AMFLOW_FIREBASE_CONFIG = {
 ## Структура
 
 ```
-index.html          ← зібраний застосунок (його й віддає GitHub Pages)
-vendor/firebase.js  ← Firebase SDK 13.4.0 (Auth + Firestore), зібраний локально
+index.html          ← зібраний застосунок з усім вбудованим (для роботи сайту достатньо лише його)
+vendor/firebase.js  ← Firebase SDK 13.4.0 (Auth + Firestore); вбудовується в index.html під час збирання
 firestore.rules     ← правила безпеки для Firestore
 src/                ← вихідний код: стилі та модулі JS
 tools/build.py      ← збирає src/ в index.html: python3 tools/build.py
