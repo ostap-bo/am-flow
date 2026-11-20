@@ -3876,9 +3876,6 @@ const FIELD_TYPES = [
   { id: 'date', label: 'Дата' },
   { id: 'url', label: 'Посилання' },
 ];
-const BUILTIN_VARS = [
-  { key: 'шифр', label: 'Шифр проєкту' },
-];
 const pname = c => (c && (c.code || c.name)) || '—';
 const SCOPES = [
   { id: 'all', label: 'Усі проєкти', short: '' },
@@ -3891,7 +3888,7 @@ function defaultSettings() {
     schema: 1,
     stages: [],
     fields: [],
-    vars: [{ key: 'ам', value: '' }, { key: 'саппорт', value: '' }],
+    vars: [],
     updatedAt: 0,
   };
 }
@@ -4143,31 +4140,9 @@ function progressOf(c) {
   }
   return { stages, stats, total, done, pct: total ? Math.round(done / total * 100) : 0, current, next, finished: total > 0 && done === total };
 }
-function allVars(c) {
-  const map = {};
-  if (c) map['шифр'] = c.code;
-  S.settings.vars.forEach(v => { if (v.key) map[v.key] = v.value || ''; });
-  return map;
-}
-function varKeys() {
-  const keys = BUILTIN_VARS.map(v => ({ key: v.key, label: v.label }));
-  S.settings.vars.forEach(v => v.key && keys.push({ key: v.key, label: 'Моя змінна' }));
-  return keys;
-}
-const VAR_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
-function fillText(text, c) {
-  const map = allVars(c), missing = new Set();
-  const out = String(text || '').replace(VAR_RE, (m, k) => { const v = map[k]; if (v) return v; missing.add(k); return m; });
-  return { text: out, missing: [...missing] };
-}
-function fillHtml(text, c) {
-  const map = allVars(c);
-  return esc(text).replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (m, k) => {
-    const key = k.replace(/&amp;/g, '&');
-    const v = c ? map[key] : '';
-    return v ? `<span class="var ok" title="{{${esc(key)}}}">${esc(v)}</span>` : `<span class="var" title="${c ? 'Змінна не заповнена' : 'Змінна'}">{{${k}}}</span>`;
-  });
-}
+const PH_RE = /(@тег саппорта|\[[^\]\n]{1,60}\])/g;
+function placeholders(text) { return [...new Set((String(text || '').match(PH_RE) || []))]; }
+function textHtml(text) { return esc(text).replace(/(@тег саппорта|\[[^\]\n]{1,60}\])/g, '<span class="var" title="Замініть перед відправкою">$1</span>'); }
 function findTask(tid) {
   for (const st of S.settings.stages) { const t = st.tasks.find(x => x.id === tid); if (t) return { st, t }; }
   return null;
@@ -4597,7 +4572,7 @@ function attViewHtml(a, c) {
         <div class="seg" aria-label="Мова шаблону">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="attLang" data-aid="${a.id}" data-lang="${l.id}" ${a.texts[l.id] ? '' : 'disabled title="Немає перекладу"'}>${l.short}</button>`).join('')}</div>
         <button class="btn soft sm" data-act="copyAtt" data-aid="${a.id}" data-lang="${lang}" ${txt ? '' : 'disabled'}>${icon('copy', 14)}Копіювати</button>
       </div>
-      <div class="att-text ${txt ? '' : 'empty-lang'}">${txt ? fillHtml(txt, c) : 'Текст для цієї мови ще не додано'}</div>
+      <div class="att-text ${txt ? '' : 'empty-lang'}">${txt ? textHtml(txt) : 'Текст для цієї мови ще не додано'}</div>
     </div>`;
   }
   if (a.kind === 'file') {
@@ -4646,15 +4621,14 @@ function viewClientHistory(c) {
 
 const SETTINGS_TABS = [
   { id: 'flow', label: 'Флоу етапів', ic: 'layers' },
-  { id: 'vars', label: 'Змінні й вигляд', ic: 'braces' },
   { id: 'data', label: 'Дані й синхронізація', ic: 'database' },
 ];
 
 function viewSettings(tab) {
   tab = SETTINGS_TABS.some(t => t.id === tab) ? tab : 'flow';
-  const body = tab === 'vars' ? viewSetVars() : tab === 'data' ? viewSetData() : viewSetFlow();
+  const body = tab === 'data' ? viewSetData() : viewSetFlow();
   return `<div class="page">
-    <div class="page-head"><div><h1 class="page-title">Налаштування</h1><div class="page-sub">Спільні для всіх проєктів: флоу, шаблони й дані</div></div></div>
+    <div class="page-head"><div><h1 class="page-title">Налаштування</h1><div class="page-sub">Одна воронка для всіх проєктів, шаблони й дані</div></div></div>
     <div class="settings-layout">
       <nav class="settings-nav">${SETTINGS_TABS.map(t => `<a class="nav-item ${tab === t.id ? 'active' : ''}" href="#/settings/${t.id}">${icon(t.ic, 16)}${t.label}</a>`).join('')}</nav>
       <div>${body}</div>
@@ -4767,7 +4741,7 @@ function attEditHtml(a, i, n) {
           <span class="sp"></span><span class="muted" style="font-size:12px">${lang === 'uk' ? 'Основна мова' : 'Переклад'}</span>
         </div>
         <textarea class="textarea" rows="7" id="att-${a.id}-${lang}" data-in="aText" data-aid="${a.id}" data-lang="${lang}" placeholder="${lang === 'uk' ? 'Текст шаблону українською' : lang === 'ru' ? 'Текст шаблона на русском' : 'Template text in English'}">${esc(a.texts[lang] || '')}</textarea>
-        <div class="var-chips"><span class="lbl">Вставити:</span>${varKeys().map(v => `<button type="button" class="chip-btn" data-act="insVar" data-aid="${a.id}" data-key="${esc(v.key)}" title="${esc(v.label)}">{{${esc(v.key)}}}</button>`).join('')}<a href="#/settings/vars" class="muted" style="font-size:12px;margin-left:4px" data-act="closeDrawerLink">Керувати змінними</a></div>
+        <div class="hint">Заготовки на кшталт <span class="code-chip">@тег саппорта</span> чи <span class="code-chip">[дата]</span> на сторінці проєкту підсвічуються жовтим — їх треба замінити перед відправкою.</div>
       </div></div>`;
   }
   if (a.kind === 'file') {
@@ -4776,32 +4750,6 @@ function attEditHtml(a, i, n) {
   }
   return `<div class="att-edit"><div class="att-edit-head">${icon('link', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва посилання" aria-label="Назва посилання">${ctrls}</div>
     <div class="att-edit-body"><input class="input" type="url" data-in="aUrl" data-aid="${a.id}" value="${esc(a.url || '')}" placeholder="https://…" aria-label="Адреса"></div></div>`;
-}
-
-/* ---------- vars & appearance ---------- */
-function viewSetVars() {
-  const theme = currentTheme();
-  return `
-    <h2 class="section-title">Змінні для шаблонів</h2>
-    <p class="section-sub">Пишіть у шаблоні <span class="code-chip">{{змінна}}</span>. Коли копіюєте шаблон зі сторінки проєкту, змінна заміниться значенням. Незаповнені змінні підсвічуються жовтим.</p>
-    <div class="card card-pad mb-16">
-      <div class="row" style="margin-bottom:12px"><div class="card-title">Мої змінні</div><span class="sp"></span><button class="btn sm" data-act="addVar">${icon('plus', 14)}Змінна</button></div>
-      <div class="kv-row" style="margin-bottom:4px"><span class="label" style="margin:0">Ключ</span><span class="label" style="margin:0">Значення</span><span></span></div>
-      ${S.settings.vars.map((v, i) => `<div class="kv-row">
-        <input class="input" style="font-family:var(--mono)" data-in="vKey" data-i="${i}" value="${esc(v.key)}" placeholder="напр. ам" aria-label="Ключ">
-        <input class="input" data-in="vVal" data-i="${i}" value="${esc(v.value)}" placeholder="ваше ім’я" aria-label="Значення">
-        <button class="icon-btn sm danger" data-act="delVar" data-i="${i}" aria-label="Видалити">${icon('trash', 15)}</button></div>`).join('') || `<div class="muted">Немає власних змінних</div>`}
-      <div class="hint">Змінна <span class="code-chip">ам</span> — ваше ім'я для шаблонів.</div>
-    </div>
-    <div class="card card-pad mb-16">
-      <div class="card-title" style="margin-bottom:10px">Вбудовані змінні</div>
-      <div class="row wrap">${BUILTIN_VARS.map(v => `<span class="badge outline" style="height:26px"><span style="font-family:var(--mono)">{{${esc(v.key)}}}</span><span class="muted" style="font-weight:500">${esc(v.label)}</span></span>`).join('')}</div>
-      <div class="hint">Підставляється автоматично, коли копіюєте шаблон зі сторінки проєкту.</div>
-    </div>
-    <div class="card card-pad">
-      <div class="card-title" style="margin-bottom:10px">Вигляд</div>
-      <div class="seg"><button class="${theme === 'light' ? 'on' : ''}" data-act="setTheme" data-v="light">${icon('sun', 14)}Світла</button><button class="${theme === 'dark' ? 'on' : ''}" data-act="setTheme" data-v="dark">${icon('moon', 14)}Темна</button></div>
-    </div>`;
 }
 
 /* ---------- data ---------- */
@@ -4830,7 +4778,7 @@ function viewSetData() {
       </div>
       <div class="card card-pad">
         <div class="card-title">Флоу</div>
-        <p class="muted" style="margin:4px 0 14px">Лише етапи, пункти, шаблони й змінні, без проєктів. Зручно для чернеток і перенесення.</p>
+        <p class="muted" style="margin:4px 0 14px">Лише етапи, кроки й шаблони, без проєктів. Зручно для чернеток і перенесення.</p>
         <div class="row wrap" style="margin-top:34px"><button class="btn sm" data-act="exportFlow">${icon('download', 14)}Експортувати флоу</button><button class="btn sm" data-act="importFlow">${icon('upload', 14)}Імпортувати флоу</button></div>
       </div>
     </div>
@@ -5149,9 +5097,9 @@ const ACTIONS = {
     const f = findAtt(el.dataset.aid); if (!f) return;
     const c = curClient();
     const raw = f.a.texts[el.dataset.lang] || '';
-    const { text, missing } = c ? fillText(raw, c) : { text: raw, missing: [] };
+    const text = raw, missing = placeholders(raw);
     if (!await copyText(text)) return toast('Не вдалося скопіювати', { error: true });
-    toast(missing.length ? `Скопійовано. Не заповнено: ${missing.map(k => '{{' + k + '}}').join(', ')}` : `Скопійовано (${langOf(el.dataset.lang).short})`);
+    toast(missing.length ? `Скопійовано. Замініть: ${missing.join(', ')}` : `Скопійовано (${langOf(el.dataset.lang).short})`);
   },
   async copyLink(el) { await copyText(el.dataset.url); toast('Посилання скопійовано'); },
   async dlFile(el) {
@@ -5239,13 +5187,6 @@ const ACTIONS = {
     renderDrawer();
     const ta = $(`#att-${el.dataset.aid}-${el.dataset.lang}`); ta && ta.focus();
   },
-  insVar(el) {
-    const ta = $(`#drawer textarea[data-in=aText][data-aid="${el.dataset.aid}"]`); if (!ta) return;
-    const ins = `{{${el.dataset.key}}}`, s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? s;
-    ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
-    ta.focus(); ta.setSelectionRange(s + ins.length, s + ins.length);
-    ta.dispatchEvent(new Event('input', { bubbles: true }));
-  },
   async delTask() {
     const f = findTask(S.ui.settingsTask); if (!f) return;
     const touched = [...S.clients.values()].filter(c => c.progress[f.t.id] && (c.progress[f.t.id].done || c.progress[f.t.id].skipped)).length;
@@ -5254,10 +5195,6 @@ const ACTIONS = {
     updateSettings(() => { f.st.tasks = f.st.tasks.filter(t => t.id !== f.t.id); }, { render: false });
     closeDrawer(); toast('Пункт видалено');
   },
-
-  /* settings: vars */
-  addVar() { updateSettings(s => s.vars.push({ key: '', value: '' })); const ins = $$('[data-in=vKey]'); ins.length && ins[ins.length - 1].focus(); },
-  delVar(el) { updateSettings(s => s.vars.splice(+el.dataset.i, 1)); },
 
   /* data */
   exportBackup: () => exportBackup($('#bk-files') ? $('#bk-files').getAttribute('aria-checked') === 'true' : true),
@@ -5285,8 +5222,6 @@ const INPUTS = {
   aTitle: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.title = el.value; }, { render: false }); },
   aText: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.texts[el.dataset.lang] = el.value; }, { render: false }); },
   aUrl: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.url = el.value.trim(); }, { render: false }); },
-  vKey: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.key = slugKey(el.value); }, { render: false }),
-  vVal: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.value = el.value; }, { render: false }),
 };
 const CHANGES = {
 };
@@ -5364,8 +5299,7 @@ async function importFlowData(data, fname) {
   const oldFiles = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && oldFiles.add(a.fileId))));
   const restored = await restoreFiles(data.files);
   const incoming = normalizeSettings({ stages: clone(data.stages || []), fields: clone(data.fields || S.settings.fields), vars: clone(data.vars || []) });
-  const merged = incoming.vars.map(v => { const old = S.settings.vars.find(o => o.key === v.key); return old && old.value && !v.value ? { ...v, value: old.value } : v; });
-  S.settings.vars.forEach(o => { if (o.key && !merged.some(v => v.key === o.key)) merged.push(o); });
+  const merged = [];
   updateSettings(s => { s.stages = incoming.stages; s.fields = incoming.fields; s.vars = merged; });
   const keep = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && keep.add(a.fileId))));
   oldFiles.forEach(id => { if (!keep.has(id)) S.store.deleteFile(id); });
