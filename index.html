@@ -1,0 +1,2808 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fb">
+<meta name="robots" content="noindex, nofollow">
+<title>AM Flow</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232563eb'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' transform='translate(4 4)'%3E%3Ccircle cx='6' cy='19' r='3'/%3E%3Cpath d='M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15'/%3E%3Ccircle cx='18' cy='5' r='3'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap" rel="stylesheet">
+<script>
+  /* ── Firebase ───────────────────────────────────────────────────────────
+     Щоб не вставляти конфіг на кожному пристрої, замініть null на свій
+     firebaseConfig з консолі Firebase (Project settings → Your apps → Web).
+     Ці ключі не секретні: доступ до даних захищають правила firestore.rules. */
+  window.AMFLOW_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDHEFbhjz9z2xy8jlP0rHBzM7AKtpGMZjs",
+    authDomain: "am-flow.firebaseapp.com",
+    projectId: "am-flow",
+    storageBucket: "am-flow.firebasestorage.app",
+    messagingSenderId: "714371516536",
+    appId: "1:714371516536:web:c3911ffd565cc34cc5458d",
+    measurementId: "G-MJ0EJPMDP8"
+  };
+
+  (function () { try { var t = localStorage.getItem('amflow:theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; } catch (e) {} })();
+</script>
+<style>
+/* ============ AM Flow — styles ============ */
+:root {
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #f6f8fc;
+  --surface-3: #eef2f8;
+  --border: #e2e7f0;
+  --border-strong: #cfd7e4;
+  --text: #121a2c;
+  --text-2: #55627a;
+  --text-3: #8592a8;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4fd8;
+  --primary-soft: #eaf0fe;
+  --primary-soft-2: #d9e5fd;
+  --primary-text: #1d4fd8;
+  --on-primary: #ffffff;
+
+  --success: #16a34a;
+  --success-soft: #e7f6ec;
+  --warning: #c27803;
+  --warning-soft: #fdf3e1;
+  --danger: #dc3545;
+  --danger-soft: #fdecee;
+  --violet: #7c5cf0;
+  --violet-soft: #f0ecfe;
+
+  --shadow-sm: 0 1px 2px rgba(18, 32, 64, .06);
+  --shadow: 0 1px 2px rgba(18, 32, 64, .05), 0 4px 16px rgba(18, 32, 64, .06);
+  --shadow-lg: 0 12px 40px rgba(18, 32, 64, .16), 0 2px 6px rgba(18, 32, 64, .06);
+  --overlay: rgba(18, 26, 44, .38);
+
+  --r-sm: 6px;
+  --r: 10px;
+  --r-lg: 14px;
+  --sidebar-w: 248px;
+  --focus: 0 0 0 3px rgba(37, 99, 235, .28);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --bg: #151b29;
+  --surface: #1c2435;
+  --surface-2: #212a3d;
+  --surface-3: #283247;
+  --border: #2c3750;
+  --border-strong: #3a4763;
+  --text: #e7ecf6;
+  --text-2: #a3b0c8;
+  --text-3: #74829c;
+
+  --primary: #5b8dff;
+  --primary-hover: #7aa2ff;
+  --primary-soft: rgba(91, 141, 255, .14);
+  --primary-soft-2: rgba(91, 141, 255, .24);
+  --primary-text: #8fb0ff;
+  --on-primary: #0f1a33;
+
+  --success: #3ccf76;
+  --success-soft: rgba(60, 207, 118, .13);
+  --warning: #f2b23e;
+  --warning-soft: rgba(242, 178, 62, .14);
+  --danger: #ff6b74;
+  --danger-soft: rgba(255, 107, 116, .14);
+  --violet: #a48bff;
+  --violet-soft: rgba(164, 139, 255, .15);
+
+  --shadow-sm: 0 1px 2px rgba(5, 10, 25, .3);
+  --shadow: 0 1px 2px rgba(5, 10, 25, .25), 0 6px 20px rgba(5, 10, 25, .25);
+  --shadow-lg: 0 16px 48px rgba(5, 10, 25, .5);
+  --overlay: rgba(10, 14, 26, .6);
+  --focus: 0 0 0 3px rgba(91, 141, 255, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--primary-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+svg { flex-shrink: 0; }
+::selection { background: var(--primary-soft-2); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Layout ---------- */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: sticky; top: 0; height: 100vh;
+  z-index: 40;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 14px; }
+.brand-mark {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(140deg, var(--primary) 0%, #5f8dff 100%);
+  display: grid; place-items: center; color: #fff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
+}
+.brand-name { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+.brand-sub { font-size: 11.5px; color: var(--text-3); margin-top: -2px; }
+
+.nav { padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: 8px;
+  color: var(--text-2); font-weight: 500; cursor: pointer;
+  border: 0; background: none; width: 100%; text-align: left;
+  text-decoration: none !important;
+}
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item.active { background: var(--primary-soft); color: var(--primary-text); }
+.nav-item .count { margin-left: auto; font-size: 12px; color: var(--text-3); font-weight: 500; }
+.nav-item.active .count { color: var(--primary-text); }
+.nav-section { padding: 16px 20px 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); }
+.nav-clients { flex: 1; overflow-y: auto; padding: 0 10px 10px; display: flex; flex-direction: column; gap: 1px; }
+.nav-client { display: flex; align-items: center; gap: 9px; padding: 6px 10px; border-radius: 8px; color: var(--text-2); cursor: pointer; text-decoration: none !important; }
+.nav-client:hover { background: var(--surface-2); color: var(--text); }
+.nav-client.active { background: var(--surface-3); color: var(--text); }
+.nav-client .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; }
+.sidebar-foot { border-top: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.sync { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3); padding: 4px 10px; }
+.sync .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+.sync.saving .dot { background: var(--warning); animation: pulse 1s infinite; }
+.sync.offline .dot { background: var(--text-3); }
+.sync.error .dot { background: var(--danger); }
+@keyframes pulse { 50% { opacity: .35; } }
+.foot-row { display: flex; align-items: center; gap: 4px; }
+.user-chip { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 12.5px; color: var(--text-2); }
+.user-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { display: none; }
+.page { padding: 28px 36px 64px; max-width: 1240px; width: 100%; margin: 0 auto; }
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.page-title { font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
+.page-sub { color: var(--text-2); margin-top: 2px; }
+.crumbs { display: flex; align-items: center; gap: 6px; color: var(--text-3); font-size: 13px; margin-bottom: 10px; }
+.crumbs a { color: var(--text-2); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 36px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text); font-weight: 550; font-size: 13.5px;
+  cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s, color .12s, box-shadow .12s;
+  text-decoration: none !important;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:focus-visible, .icon-btn:focus-visible, .switch:focus-visible, .seg button:focus-visible, .tab:focus-visible, .nav-item:focus-visible, .chip-btn:focus-visible { outline: none; box-shadow: var(--focus); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+[data-theme="dark"] .btn.primary { color: #0e1830; }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn.danger:hover { filter: brightness(.94); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.ghost:hover { background: var(--surface-3); color: var(--text); }
+.btn.soft { background: var(--primary-soft); border-color: transparent; color: var(--primary-text); }
+.btn.soft:hover { background: var(--primary-soft-2); }
+.btn.sm { height: 30px; padding: 0 10px; font-size: 13px; border-radius: 7px; }
+.btn.xs { height: 26px; padding: 0 8px; font-size: 12.5px; border-radius: 6px; gap: 5px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.block { width: 100%; }
+.icon-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: 0; background: transparent;
+  display: inline-grid; place-items: center; color: var(--text-2); cursor: pointer;
+}
+.icon-btn:hover { background: var(--surface-3); color: var(--text); }
+.icon-btn.sm { width: 28px; height: 28px; border-radius: 7px; }
+.icon-btn.danger:hover { color: var(--danger); background: var(--danger-soft); }
+
+/* ---------- Form controls ---------- */
+.input, .select, .textarea {
+  width: 100%; height: 36px; padding: 0 11px;
+  border: 1px solid var(--border-strong); border-radius: 8px;
+  background: var(--surface); outline: none;
+  transition: border-color .12s, box-shadow .12s;
+}
+.textarea { height: auto; min-height: 84px; padding: 9px 11px; resize: vertical; line-height: 1.5; }
+.input:focus, .select:focus, .textarea:focus { border-color: var(--primary); box-shadow: var(--focus); }
+.input::placeholder, .textarea::placeholder { color: var(--text-3); }
+.select { appearance: none; padding-right: 30px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238592a8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; }
+.label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
+.hint { font-size: 12.5px; color: var(--text-3); margin-top: 5px; }
+.field { margin-bottom: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
+.search .input { padding-left: 34px; }
+
+/* inline (borderless until hover) inputs for the client card */
+.inline-input {
+  width: 100%; border: 1px solid transparent; background: transparent; border-radius: 7px;
+  padding: 6px 8px; margin: 0 -8px; outline: none; min-height: 34px; transition: background .12s, border-color .12s;
+}
+textarea.inline-input { resize: vertical; min-height: 58px; line-height: 1.5; display: block; }
+.inline-input:hover { background: var(--surface-2); }
+.inline-input:focus { background: var(--surface); border-color: var(--primary); box-shadow: var(--focus); }
+.inline-input::placeholder { color: var(--text-3); }
+select.inline-input { appearance: none; cursor: pointer; }
+textarea.inline-input.auto { resize: none; overflow: hidden; min-height: 34px; }
+
+/* Switch */
+.switch {
+  position: relative; width: 38px; height: 22px; border-radius: 22px; border: 0; padding: 0;
+  background: var(--border-strong); cursor: pointer; transition: background .18s; flex-shrink: 0;
+}
+.switch::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .2s cubic-bezier(.3, 1.4, .5, 1);
+}
+.switch[aria-checked="true"] { background: var(--success); }
+.switch[aria-checked="true"]::after { transform: translateX(16px); }
+.switch:disabled { opacity: .45; cursor: not-allowed; }
+[data-theme="dark"] .switch::after { background: #f2f5fb; }
+
+/* Segmented */
+.seg { display: inline-flex; background: var(--surface-3); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; border-radius: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-2); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.seg button:hover:not(:disabled) { color: var(--text); }
+.seg button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.seg button:disabled { opacity: .4; cursor: not-allowed; }
+.seg .mini-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); }
+
+/* Tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 22px; overflow-x: auto; scrollbar-width: none; }
+.tab {
+  border: 0; background: none; padding: 10px 14px; font-weight: 600; color: var(--text-2); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  text-decoration: none !important;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary-text); border-bottom-color: var(--primary); }
+.tab .count { font-size: 11.5px; background: var(--surface-3); color: var(--text-2); padding: 1px 7px; border-radius: 10px; font-weight: 600; }
+.tab.active .count { background: var(--primary-soft); color: var(--primary-text); }
+
+/* ---------- Cards ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); }
+.card-pad { padding: 18px 20px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 0; }
+.card-title { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.card-sub { font-size: 12.5px; color: var(--text-3); }
+.grid { display: grid; gap: 16px; }
+.grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.dash { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); align-items: start; }
+
+.stat { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.stat-top { display: flex; align-items: center; justify-content: space-between; color: var(--text-2); font-size: 13px; font-weight: 550; }
+.stat-ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-text); }
+.stat-ico.red { background: var(--danger-soft); color: var(--danger); }
+.stat-ico.amber { background: var(--warning-soft); color: var(--warning); }
+.stat-ico.green { background: var(--success-soft); color: var(--success); }
+.stat-val { font-size: 28px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.stat-foot { font-size: 12.5px; color: var(--text-3); }
+
+/* ---------- Badges / chips ---------- */
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--surface-3); color: var(--text-2); }
+.badge .bd { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge.blue { background: var(--primary-soft); color: var(--primary-text); }
+.badge.green { background: var(--success-soft); color: var(--success); }
+.badge.amber { background: var(--warning-soft); color: var(--warning); }
+.badge.red { background: var(--danger-soft); color: var(--danger); }
+.badge.violet { background: var(--violet-soft); color: var(--violet); }
+.badge.outline { background: transparent; border: 1px solid var(--border-strong); }
+.code-chip { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: var(--surface-3); color: var(--text-2); letter-spacing: .02em; }
+.chip-btn { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border-radius: 13px; border: 1px dashed var(--border-strong); background: transparent; color: var(--text-2); font-size: 12.5px; cursor: pointer; font-family: var(--mono); }
+.chip-btn:hover { border-color: var(--primary); color: var(--primary-text); background: var(--primary-soft); }
+
+.avatar { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #fff; flex-shrink: 0; letter-spacing: .02em; }
+.avatar.sm { width: 22px; height: 22px; border-radius: 6px; font-size: 10px; }
+.avatar.lg { width: 52px; height: 52px; border-radius: 14px; font-size: 18px; }
+
+.progress { height: 6px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+.progress > i { display: block; height: 100%; border-radius: 6px; background: var(--primary); transition: width .35s ease; }
+.progress.done > i { background: var(--success); }
+.ring { --p: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--primary) calc(var(--p) * 1%), var(--surface-3) 0); }
+.ring.done { background: conic-gradient(var(--success) 100%, var(--surface-3) 0); }
+.ring > span { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-size: 10.5px; font-weight: 700; }
+.ring.sm { width: 18px; height: 18px; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3.5px)); }
+.ring.sm > span { display: none; }
+.row > .progress { flex: 1; min-width: 40px; }
+
+/* ---------- Lists ---------- */
+.list { display: flex; flex-direction: column; }
+.list-item { display: flex; align-items: center; gap: 12px; padding: 11px 20px; border-top: 1px solid var(--border); cursor: pointer; text-decoration: none !important; color: inherit; }
+.list-item:first-child { border-top: 0; }
+.list-item:hover { background: var(--surface-2); }
+.list-item .grow { flex: 1; min-width: 0; }
+.list-item .t { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-item .s { font-size: 12.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+
+.table { width: 100%; border-collapse: collapse; }
+.table th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); font-weight: 600; padding: 12px 16px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.table tr:last-child td { border-bottom: 0; }
+.table tbody tr { cursor: pointer; }
+.table tbody tr:hover td { background: var(--surface-2); }
+.cell-client { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cell-client .nm { font-weight: 600; }
+.cell-muted { color: var(--text-2); font-size: 13px; }
+.cell-client .cell-muted { white-space: nowrap; }
+.list-more { padding: 10px 20px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-3); }
+.cell-trunc { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.empty { text-align: center; padding: 44px 24px; color: var(--text-2); }
+.empty-ico { width: 52px; height: 52px; border-radius: 14px; background: var(--primary-soft); color: var(--primary-text); display: grid; place-items: center; margin: 0 auto 14px; }
+.empty h3 { margin: 0 0 6px; color: var(--text); font-size: 16px; }
+.empty p { margin: 0 auto 16px; max-width: 420px; }
+.empty.sm { padding: 26px 20px; }
+
+/* ---------- Client cards (clients page) ---------- */
+.client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.client-card { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s; text-decoration: none !important; color: inherit; }
+.client-card:hover { border-color: var(--primary-soft-2); box-shadow: var(--shadow); }
+.cc-top { display: flex; align-items: center; gap: 11px; }
+.cc-top .nm { font-weight: 650; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cc-meta { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-3); }
+.cc-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); margin-bottom: 6px; }
+.cc-next { font-size: 13px; color: var(--text-2); display: flex; gap: 6px; align-items: flex-start; }
+.cc-next b { color: var(--text); font-weight: 550; }
+.cc-next span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.toolbar .search { width: 280px; }
+
+/* ---------- Client header ---------- */
+.client-head { display: flex; gap: 16px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.client-head .title-wrap { flex: 1; min-width: 220px; }
+.client-head h1 { font-size: 23px; margin: 0; font-weight: 700; letter-spacing: -.02em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.client-head .meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; color: var(--text-3); font-size: 13px; }
+.status-select { height: 30px; font-size: 13px; font-weight: 600; width: auto; padding-left: 10px; }
+.head-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- Process ---------- */
+.proc-summary { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; padding: 18px 22px; margin-bottom: 14px; }
+.big-ring { --p: 0; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--primary) calc(var(--p) * 1%), var(--surface-3) 0); }
+.big-ring.done { background: conic-gradient(var(--success) 100%, var(--surface-3) 0); }
+.big-ring > div { width: 62px; height: 62px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-weight: 700; font-size: 17px; letter-spacing: -.02em; }
+.ps-info .l1 { font-size: 13px; color: var(--text-2); }
+.ps-info .l2 { font-size: 16px; font-weight: 650; margin: 2px 0 6px; }
+.ps-info .l3 { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ps-info .l3 b { color: var(--text); font-weight: 600; }
+.ps-side { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.ps-side .k { font-size: 12px; color: var(--text-3); }
+.ps-side .v { font-weight: 600; font-size: 13.5px; }
+
+.stepper { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; scrollbar-width: thin; }
+.step { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; white-space: nowrap; font-size: 13px; color: var(--text-2); font-weight: 550; }
+.step:hover { border-color: var(--border-strong); color: var(--text); }
+.step .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; background: var(--surface-3); color: var(--text-2); }
+.step.current { border-color: var(--primary); color: var(--primary-text); background: var(--primary-soft); }
+.step.current .n { background: var(--primary); color: #fff; }
+.step.done .n { background: var(--success); color: #fff; }
+.step.skipped { opacity: .55; }
+
+.stage { margin-bottom: 12px; overflow: hidden; scroll-margin-top: 16px; }
+.stage-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px 14px 18px; cursor: pointer; user-select: none; }
+.stage-head:hover { background: var(--surface-2); }
+.stage-num { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--surface-3); color: var(--text-2); flex-shrink: 0; }
+.stage.current .stage-num { background: var(--primary); color: #fff; }
+.stage.complete .stage-num { background: var(--success); color: #fff; }
+.stage.skipped .stage-num { background: var(--surface-3); color: var(--text-3); }
+.stage.skipped .stage-title .t { color: var(--text-2); }
+.stage-title { flex: 1; min-width: 0; }
+.stage-title .t { font-weight: 650; font-size: 15px; }
+.stage-title .d { font-size: 12.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-prog { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-2); font-weight: 600; }
+.stage-prog .progress { width: 90px; }
+.chev { color: var(--text-3); transition: transform .18s; }
+.stage.open > .stage-head .chev { transform: rotate(90deg); }
+.stage-body { display: none; border-top: 1px solid var(--border); }
+.stage.open > .stage-body { display: block; }
+
+.task { border-top: 1px solid var(--border); }
+.task:first-child { border-top: 0; }
+.task-row { display: flex; align-items: center; gap: 14px; padding: 11px 16px 11px 18px; cursor: pointer; }
+.task-row:hover { background: var(--surface-2); }
+.task.open > .task-row { background: var(--surface-2); }
+.task-main { flex: 1; min-width: 0; }
+.task-title { font-weight: 550; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.task.done .task-title .tt { color: var(--text-2); }
+.task.skipped .task-title .tt { color: var(--text-3); text-decoration: line-through; }
+.task-sub { font-size: 12.5px; color: var(--text-3); display: flex; gap: 10px; align-items: center; margin-top: 1px; flex-wrap: wrap; }
+.task-sub .it { display: inline-flex; align-items: center; gap: 4px; }
+.task-meta { display: flex; align-items: center; gap: 6px; }
+.due-m { display: none; }
+.task-body { display: none; padding: 4px 18px 18px 70px; background: var(--surface-2); }
+.task.open > .task-body { display: block; }
+.task-desc { color: var(--text-2); margin: 0 0 14px; white-space: pre-wrap; }
+.task-tools { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; margin-top: 14px; }
+.task-tools .field { margin: 0; }
+.mini-label { font-size: 11.5px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.add-task { display: flex; align-items: center; gap: 8px; padding: 10px 18px; color: var(--text-3); font-weight: 550; font-size: 13px; cursor: pointer; border-top: 1px solid var(--border); background: none; border-left: 0; border-right: 0; border-bottom: 0; width: 100%; text-align: left; }
+.add-task:hover { color: var(--primary-text); background: var(--primary-soft); }
+
+/* attachments */
+.atts { display: flex; flex-direction: column; gap: 10px; }
+.att { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.att-head { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.att-head .t { flex: 1; font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 8px; min-width: 140px; }
+.att-head .t svg { color: var(--primary-text); }
+.att-text { padding: 12px 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; max-height: 320px; overflow: auto; }
+.att-text .var { background: var(--warning-soft); color: var(--warning); border-radius: 4px; padding: 0 3px; font-family: var(--mono); font-size: 12.5px; }
+.att-text .var.ok { background: var(--primary-soft); color: var(--primary-text); font-family: inherit; font-size: inherit; }
+.att-text.empty-lang { color: var(--text-3); font-style: italic; }
+.att-file { display: flex; align-items: center; gap: 12px; padding: 10px 12px 10px 14px; }
+.att-file .ico { width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-text); }
+.att-file .grow { flex: 1; min-width: 0; }
+.att-file .nm { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.att-file .sz { font-size: 12px; color: var(--text-3); }
+
+/* ---------- Info tab ---------- */
+.info-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.fgroup { padding: 4px 20px 12px; }
+.fgroup-title { font-size: 14px; font-weight: 650; padding: 14px 0 6px; }
+.frow { display: grid; grid-template-columns: 170px 1fr; gap: 14px; align-items: start; padding: 4px 0; }
+.frow .fl { font-size: 13px; color: var(--text-2); padding-top: 7px; font-weight: 500; }
+.frow .fv { min-width: 0; padding-left: 8px; }
+.fv a.ext { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; margin-top: 2px; }
+
+.notes-composer { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.notes-composer .textarea { min-height: 70px; }
+.note { padding: 14px 18px; border-top: 1px solid var(--border); }
+.note:first-child { border-top: 0; }
+.note-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.note-head .sp { flex: 1; }
+.note-text { white-space: pre-wrap; font-size: 13.5px; word-break: break-word; }
+
+.dropzone { border: 1.5px dashed var(--border-strong); border-radius: var(--r); padding: 18px; text-align: center; color: var(--text-2); cursor: pointer; transition: border-color .12s, background .12s; font-size: 13px; }
+.dropzone:hover, .dropzone.over { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-text); }
+.dropzone b { color: var(--primary-text); }
+
+/* ---------- History ---------- */
+.timeline { padding: 6px 20px 18px; }
+.tl-day { font-size: 12px; font-weight: 650; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; padding: 16px 0 8px; }
+.tl-item { display: flex; gap: 12px; padding: 7px 0; align-items: flex-start; }
+.tl-ico { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-3); color: var(--text-2); flex-shrink: 0; }
+.tl-ico.green { background: var(--success-soft); color: var(--success); }
+.tl-ico.blue { background: var(--primary-soft); color: var(--primary-text); }
+.tl-ico.amber { background: var(--warning-soft); color: var(--warning); }
+.tl-ico.red { background: var(--danger-soft); color: var(--danger); }
+.tl-ico.violet { background: var(--violet-soft); color: var(--violet); }
+.tl-text { flex: 1; font-size: 13.5px; padding-top: 3px; word-break: break-word; }
+.tl-text .cl { font-weight: 600; }
+.tl-time { font-size: 12px; color: var(--text-3); padding-top: 4px; white-space: nowrap; }
+
+/* ---------- Settings ---------- */
+.settings-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; align-items: start; }
+.settings-nav { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 24px; }
+.flow-stage { margin-bottom: 12px; }
+.fs-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 8px; }
+.drag { cursor: grab; color: var(--text-3); padding: 4px; border-radius: 6px; display: grid; place-items: center; }
+.drag:hover { background: var(--surface-3); color: var(--text-2); }
+.fs-head .stage-num { width: 26px; height: 26px; font-size: 12.5px; }
+.fs-title { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fs-title input { font-weight: 650; font-size: 15px; }
+.fs-title .inline-input { margin: 0; padding: 4px 8px; min-height: 30px; }
+.fs-title .inline-input.desc { font-size: 12.5px; color: var(--text-2); font-weight: 400; min-height: 26px; padding: 2px 8px; }
+.fs-tasks { border-top: 1px solid var(--border); }
+.fs-task { display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-top: 1px solid var(--border); cursor: pointer; }
+.fs-task:first-child { border-top: 0; }
+.fs-task:hover { background: var(--surface-2); }
+.fs-task.selected { background: var(--primary-soft); }
+.fs-task .tt { flex: 1; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fs-task .meta { display: flex; gap: 6px; align-items: center; color: var(--text-3); font-size: 12px; }
+.fs-task .meta .it { display: inline-flex; gap: 3px; align-items: center; }
+.dragging { opacity: .4; }
+.drop-before { box-shadow: inset 0 2px 0 var(--primary); }
+.drop-after { box-shadow: inset 0 -2px 0 var(--primary); }
+
+.drawer-wrap { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; background: var(--overlay); animation: fade .15s; }
+.drawer { width: min(620px, 100%); height: 100%; background: var(--surface); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; animation: slide .22s cubic-bezier(.2, .9, .3, 1); }
+.drawer-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.drawer-head .t { flex: 1; font-weight: 650; font-size: 16px; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+.drawer-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 12.5px; }
+.drawer-foot .sp { flex: 1; }
+@keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+@keyframes fade { from { opacity: 0; } }
+
+.att-edit { border: 1px solid var(--border); border-radius: var(--r); margin-bottom: 12px; overflow: hidden; }
+.att-edit-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+.att-edit-head .inline-input { margin: 0; font-weight: 600; min-height: 30px; padding: 4px 8px; }
+.att-edit-body { padding: 12px; }
+.var-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+.var-chips .lbl { font-size: 12px; color: var(--text-3); margin-right: 2px; }
+
+.field-list .fl-item { display: grid; grid-template-columns: 24px minmax(0, 1.4fr) minmax(0, 1fr) 140px minmax(0, 1fr) 32px; gap: 8px; align-items: center; padding: 8px 12px 8px 8px; border-top: 1px solid var(--border); }
+.field-list .fl-item:first-child { border-top: 0; }
+.field-list .fl-head { font-size: 11.5px; text-transform: uppercase; color: var(--text-3); font-weight: 600; letter-spacing: .05em; padding: 12px 12px 6px 8px; display: grid; grid-template-columns: 24px minmax(0, 1.4fr) minmax(0, 1fr) 140px minmax(0, 1fr) 32px; gap: 8px; }
+.field-list .input, .field-list .select { height: 32px; font-size: 13px; }
+.fl-group-row { padding: 10px 12px; background: var(--surface-2); font-weight: 600; font-size: 13px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+.kv-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+
+.section-title { font-size: 16px; font-weight: 650; margin: 0 0 4px; letter-spacing: -.01em; }
+.section-sub { color: var(--text-2); margin: 0 0 16px; font-size: 13.5px; }
+.callout { display: flex; gap: 12px; padding: 12px 14px; border-radius: var(--r); background: var(--primary-soft); color: var(--text); font-size: 13.5px; margin-bottom: 16px; align-items: flex-start; }
+.callout svg { color: var(--primary-text); margin-top: 1px; }
+.callout.amber { background: var(--warning-soft); }
+.callout.amber svg { color: var(--warning); }
+
+/* ---------- Modal / menu / toast ---------- */
+.modal-wrap { position: fixed; inset: 0; background: var(--overlay); z-index: 80; display: grid; place-items: center; padding: 20px; animation: fade .15s; }
+.modal { width: min(480px, 100%); background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-lg); animation: pop .18s cubic-bezier(.2, .9, .3, 1.2); max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
+.modal.wide { width: min(640px, 100%); }
+.modal-head { padding: 20px 22px 6px; display: flex; gap: 14px; align-items: flex-start; }
+.modal-head h3 { margin: 0; font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+.modal-head p { margin: 6px 0 0; color: var(--text-2); }
+.modal-ico { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; background: var(--primary-soft); color: var(--primary-text); }
+.modal-ico.danger { background: var(--danger-soft); color: var(--danger); }
+.modal-ico.amber { background: var(--warning-soft); color: var(--warning); }
+.modal-body { padding: 14px 22px 4px; overflow-y: auto; }
+.modal-foot { padding: 14px 22px 20px; display: flex; justify-content: flex-end; gap: 8px; }
+@keyframes pop { from { transform: scale(.96) translateY(6px); opacity: 0; } }
+
+.menu { position: fixed; z-index: 90; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; box-shadow: var(--shadow-lg); padding: 5px; animation: pop .12s ease-out; }
+.menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; background: none; border-radius: 7px; cursor: pointer; text-align: left; font-size: 13.5px; color: var(--text); }
+.menu button:hover, .menu button:focus-visible { background: var(--surface-3); outline: none; }
+.menu button svg { color: var(--text-3); }
+.menu button.danger { color: var(--danger); }
+.menu button.danger svg { color: var(--danger); }
+.menu hr { border: 0; border-top: 1px solid var(--border); margin: 5px 0; }
+
+.toasts { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; background: #1d2740; color: #eef2fa; padding: 10px 12px 10px 14px; border-radius: 11px; box-shadow: var(--shadow-lg); font-size: 13.5px; animation: toastIn .22s cubic-bezier(.2, .9, .3, 1.2); max-width: calc(100vw - 32px); }
+[data-theme="dark"] .toast { background: #2e3a55; }
+.toast svg { color: #7fd6a0; }
+.toast.err svg { color: #ff8f96; }
+.toast button { border: 0; background: rgba(255, 255, 255, .12); color: #fff; font-weight: 600; font-size: 12.5px; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+.toast button:hover { background: rgba(255, 255, 255, .22); }
+.toast.out { animation: toastOut .18s forwards; }
+@keyframes toastIn { from { transform: translateY(12px); opacity: 0; } }
+@keyframes toastOut { to { transform: translateY(8px); opacity: 0; } }
+
+/* ---------- Auth / setup ---------- */
+.auth { min-height: 100vh; display: grid; place-items: center; padding: 24px; background:
+  radial-gradient(900px 500px at 15% -10%, var(--primary-soft-2), transparent 60%),
+  radial-gradient(700px 500px at 110% 110%, var(--primary-soft), transparent 60%), var(--bg); }
+.auth-card { width: min(440px, 100%); padding: 30px 30px 26px; }
+.auth-card.wide { width: min(620px, 100%); }
+.auth-card .brand { padding: 0 0 18px; }
+.auth-card h2 { margin: 0 0 6px; font-size: 21px; letter-spacing: -.02em; }
+.auth-card .sub { color: var(--text-2); margin: 0 0 20px; }
+.err-box { background: var(--danger-soft); color: var(--danger); padding: 9px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; }
+.choice { display: flex; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; margin-bottom: 10px; background: var(--surface); text-align: left; width: 100%; transition: border-color .12s, background .12s; }
+.choice:hover { border-color: var(--primary); background: var(--primary-soft); }
+.choice .ci { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary-text); flex-shrink: 0; }
+.choice .ct { font-weight: 650; }
+.choice .cd { color: var(--text-2); font-size: 13px; margin-top: 2px; }
+.steps-list { margin: 0 0 16px; padding-left: 20px; color: var(--text-2); font-size: 13.5px; }
+.steps-list li { margin-bottom: 4px; }
+.loading { min-height: 100vh; display: grid; place-items: center; color: var(--text-3); }
+.spinner { width: 26px; height: 26px; border: 3px solid var(--surface-3); border-top-color: var(--primary); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.kbd { font-family: var(--mono); font-size: 11.5px; padding: 1px 5px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; color: var(--text-2); }
+.muted { color: var(--text-3); }
+.row { display: flex; align-items: center; gap: 8px; }
+.row.wrap { flex-wrap: wrap; }
+.sp { flex: 1; }
+.mt-16 { margin-top: 16px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .grid.cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.dash, .info-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .sidebar { position: fixed; left: 0; top: 0; transform: translateX(-100%); transition: transform .22s ease, visibility .22s; visibility: hidden; }
+  .app.nav-open .sidebar { transform: none; visibility: visible; box-shadow: var(--shadow-lg); }
+  .app.nav-open .scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 35; }
+  .topbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 30; }
+  .topbar .brand-name { font-size: 15px; }
+  .page { padding: 20px 16px 56px; }
+  .settings-layout { grid-template-columns: 1fr; gap: 14px; }
+  .settings-nav { position: static; flex-direction: row; overflow-x: auto; }
+  .settings-nav .nav-item { width: auto; white-space: nowrap; }
+  .proc-summary { grid-template-columns: auto 1fr; }
+  .ps-side { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; }
+  .table .hide-m { display: none; }
+  .field-list .fl-item, .field-list .fl-head { grid-template-columns: 24px minmax(0, 1fr) 110px 32px; }
+  .field-list .hide-m { display: none; }
+}
+@media (max-width: 640px) {
+  .grid.cols-4, .grid.cols-2 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .page-title { font-size: 21px; }
+  .frow { grid-template-columns: 1fr; gap: 0; }
+  .frow .fl { padding-top: 6px; }
+  .task-body { padding: 4px 14px 16px 14px; }
+  .task-row { padding-left: 14px; gap: 12px; }
+  .stage-prog .progress { display: none; }
+  .due-m { display: inline-flex; }
+  .task-meta .badge { display: none; }
+  .toolbar .search { width: 100%; }
+  .field-row { grid-template-columns: 1fr; }
+  .stat-val { font-size: 23px; }
+  .client-head h1 { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+</style>
+</head>
+<body>
+<noscript><p style="padding:24px;font-family:sans-serif">Для роботи AM Flow потрібен увімкнений JavaScript.</p></noscript>
+<script>
+(function () {
+/* ============ AM Flow — core ============ */
+'use strict';
+
+const APP_VERSION = '1.0.0';
+const LS = { mode: 'amflow:mode', config: 'amflow:fbconfig', local: 'amflow:local:v1', theme: 'amflow:theme', ui: 'amflow:ui' };
+const MAX_FILE = 10 * 1024 * 1024;
+
+/* ---------- utils ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const uid = (p = '') => p + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-5);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const pad = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const todayISO = () => isoOf(new Date());
+const parseISO = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate() + Number(n)); return isoOf(d); };
+const diffDays = (a, b) => Math.round((parseISO(a) - parseISO(b)) / 86400000);
+const fmtDate = iso => { if (!iso) return ''; const [y, m, d] = iso.split('-'); return `${d}.${m}.${y}`; };
+const fmtTs = ts => { const d = new Date(ts); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`; };
+const fmtTime = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtTsFull = ts => `${fmtTs(ts)}, ${fmtTime(ts)}`;
+const fmtSize = b => b < 1024 ? b + ' Б' : b < 1048576 ? (b / 1024).toFixed(0) + ' КБ' : (b / 1048576).toFixed(1).replace('.', ',') + ' МБ';
+const plural = (n, one, few, many) => {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b > 1 && b < 5) return few;
+  if (b === 1) return one;
+  return many;
+};
+const longToday = () => new Intl.DateTimeFormat('uk-UA', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+const dayLabel = ts => {
+  const iso = isoOf(new Date(ts)), t = todayISO();
+  if (iso === t) return 'Сьогодні';
+  if (iso === addDays(t, -1)) return 'Вчора';
+  return new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(ts));
+};
+const relTime = ts => {
+  const s = (Date.now() - ts) / 1000;
+  if (s < 60) return 'щойно';
+  if (s < 3600) return Math.floor(s / 60) + ' хв тому';
+  if (s < 86400) return Math.floor(s / 3600) + ' год тому';
+  const d = Math.floor(s / 86400);
+  if (d < 7) return d + ' ' + plural(d, 'день', 'дні', 'днів') + ' тому';
+  return fmtTs(ts);
+};
+const debounce = (fn, ms) => { let t = null; const f = (...a) => { clearTimeout(t); t = setTimeout(() => { t = null; fn(...a); }, ms); }; f.flush = () => { if (t) { clearTimeout(t); t = null; fn(); } }; f.pending = () => !!t; return f; };
+const initials = s => {
+  const w = String(s || '?').trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return '?';
+  if (w.length === 1) return w[0].slice(0, 2).toUpperCase();
+  return (w[0][0] + w[1][0]).toUpperCase();
+};
+const PALETTE = ['#2563eb', '#7c5cf0', '#0e9384', '#d9622b', '#c2418a', '#0284c7', '#4f7a28', '#b45309'];
+const colorFor = id => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return PALETTE[h % PALETTE.length]; };
+const slugKey = s => String(s || '').toLowerCase().trim().replace(/[{}\s]+/g, '_').replace(/[^\p{L}\p{N}_]/gu, '').slice(0, 30);
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {}
+    ta.remove(); return ok;
+  }
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const blobToB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(blob); });
+const b64ToBlob = (b64, type) => { const bin = atob(b64); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: type || 'application/octet-stream' }); };
+const pickFile = (accept = '', multiple = false) => new Promise(res => {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = accept; inp.multiple = multiple;
+  inp.onchange = () => res(multiple ? [...inp.files] : inp.files[0] || null);
+  inp.click();
+});
+
+/* ---------- icons (Lucide-style, MIT) ---------- */
+const ICONS = {
+  grid: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  sliders: '<path d="M21 4h-7"/><path d="M10 4H3"/><path d="M21 12h-9"/><path d="M8 12H3"/><path d="M21 20h-5"/><path d="M12 20H3"/><path d="M14 2v4"/><path d="M8 10v4"/><path d="M16 18v4"/>',
+  plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  chevR: '<path d="m9 18 6-6-6-6"/>',
+  chevD: '<path d="m6 9 6 6 6-6"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  checkCircle: '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  copy: '<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+  msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  ext: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  trash: '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+  moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
+  edit: '<path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/>',
+  note: '<path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/>',
+  history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  arrowUp: '<path d="m5 12 7-7 7 7"/><path d="M12 19V5"/>',
+  arrowDown: '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  menu: '<path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/>',
+  ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+  undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  route: '<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
+  layers: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  list: '<path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/>',
+  braces: '<path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',
+  user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  drive: '<path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M6 16h.01"/><path d="M10 16h.01"/>',
+  target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  clip: '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+  flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+  refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+  play: '<circle cx="12" cy="12" r="10"/><path d="m10 8 6 4-6 4Z"/>',
+};
+const icon = (name, size = 16, sw = 2) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+
+/* ---------- domain constants ---------- */
+const STATUSES = [
+  { id: 'onboarding', label: 'Онбординг', tone: 'blue' },
+  { id: 'active', label: 'Активний', tone: 'green' },
+  { id: 'paused', label: 'Пауза', tone: 'amber' },
+  { id: 'finished', label: 'Завершено', tone: '' },
+];
+const statusOf = id => STATUSES.find(s => s.id === id) || STATUSES[0];
+const LANGS = [
+  { id: 'uk', short: 'УКР', name: 'Українська' },
+  { id: 'ru', short: 'РУС', name: 'Русский' },
+  { id: 'en', short: 'ENG', name: 'English' },
+];
+const langOf = id => LANGS.find(l => l.id === id) || LANGS[0];
+const FIELD_TYPES = [
+  { id: 'text', label: 'Текст' },
+  { id: 'textarea', label: 'Довгий текст' },
+  { id: 'select', label: 'Список' },
+  { id: 'date', label: 'Дата' },
+  { id: 'url', label: 'Посилання' },
+];
+const BUILTIN_VARS = [
+  { key: 'клієнт', label: 'Назва клієнта' },
+  { key: 'шифр', label: 'Шифр проєкту' },
+];
+
+function defaultSettings() {
+  return {
+    schema: 1,
+    stages: [],
+    fields: [
+      { id: 'f_cat', label: 'Категорія', key: '', type: 'select', options: ['A', 'B+', 'B', 'C'], group: 'Основне' },
+      { id: 'f_vert', label: 'Вертикаль / ніша', key: '', type: 'text', group: 'Основне' },
+      { id: 'f_geo', label: 'Гео трафіку', key: '', type: 'text', group: 'Основне' },
+      { id: 'f_plat', label: 'Платформи', key: '', type: 'text', group: 'Основне' },
+      { id: 'f_chat', label: 'Посилання на чат', key: '', type: 'url', group: 'Основне' },
+      { id: 'f_contact', label: 'Контактна особа', key: 'контакт', type: 'text', group: 'Контакти' },
+      { id: 'f_dm', label: 'ЛПР', key: '', type: 'text', group: 'Контакти' },
+      { id: 'f_fin', label: 'Фінанси / оплати', key: '', type: 'text', group: 'Контакти' },
+      { id: 'f_pay', label: 'Умови оплати', key: '', type: 'textarea', group: 'Умови співпраці' },
+    ],
+    vars: [{ key: 'ам', value: '' }],
+    updatedAt: 0,
+  };
+}
+function normalizeSettings(s) {
+  const d = defaultSettings();
+  s = s && typeof s === 'object' ? s : d;
+  s.schema = 1;
+  s.stages = Array.isArray(s.stages) ? s.stages : [];
+  s.stages.forEach(st => {
+    st.id = st.id || uid('s_'); st.title = st.title || 'Етап'; st.description = st.description || ''; st.optional = !!st.optional;
+    st.tasks = Array.isArray(st.tasks) ? st.tasks : [];
+    st.tasks.forEach(t => {
+      t.id = t.id || uid('t_'); t.title = t.title || 'Пункт'; t.description = t.description || '';
+      if (t.dueDays === '' || t.dueDays === undefined) t.dueDays = null;
+      t.attachments = Array.isArray(t.attachments) ? t.attachments : [];
+      t.attachments.forEach(a => { a.id = a.id || uid('a_'); if (a.kind === 'text') a.texts = Object.assign({ uk: '', ru: '', en: '' }, a.texts || {}); });
+    });
+  });
+  s.fields = Array.isArray(s.fields) ? s.fields : d.fields;
+  s.fields.forEach(f => { f.id = f.id || uid('f_'); f.type = f.type || 'text'; f.group = f.group || 'Основне'; f.key = f.key || ''; if (f.type === 'select') f.options = Array.isArray(f.options) ? f.options : []; });
+  s.vars = Array.isArray(s.vars) ? s.vars : [];
+  return s;
+}
+function newClient(data) {
+  const now = Date.now();
+  return {
+    id: uid('c_'), name: data.name.trim(), code: (data.code || '').trim().toUpperCase(),
+    status: data.status || 'onboarding', lang: data.lang || 'uk', color: data.color || PALETTE[Math.floor(Math.random() * PALETTE.length)],
+    startDate: data.startDate || todayISO(), fields: {}, progress: {}, customTasks: [], notes: [], files: [],
+    history: [{ id: uid('h_'), at: now, type: 'created', text: 'Клієнта створено' }],
+    createdAt: now, updatedAt: now,
+  };
+}
+function normalizeClient(c) {
+  c.fields = c.fields || {}; c.progress = c.progress || {}; c.customTasks = c.customTasks || [];
+  c.notes = c.notes || []; c.files = c.files || []; c.history = c.history || [];
+  c.status = c.status || 'onboarding'; c.lang = c.lang || 'uk'; c.startDate = c.startDate || todayISO();
+  c.color = c.color || colorFor(c.id); c.code = c.code || ''; c.name = c.name || 'Без назви';
+  return c;
+}
+
+/* ---------- storage: local (browser) ---------- */
+function idbOpen() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('amflow-files', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('files', { keyPath: 'id' });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+const idbReq = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+
+class LocalStore {
+  constructor() { this.mode = 'local'; this.data = { settings: null, clients: {} }; this.onStatus = () => {}; }
+  async init() {
+    try { this.data = JSON.parse(localStorage.getItem(LS.local)) || this.data; } catch {}
+    this.data.clients = this.data.clients || {};
+    try { this.idb = await idbOpen(); } catch (e) { console.warn('IndexedDB unavailable', e); }
+    return { settings: this.data.settings, clients: Object.values(this.data.clients) };
+  }
+  _flush() {
+    try { localStorage.setItem(LS.local, JSON.stringify(this.data)); this.onStatus('local'); }
+    catch (e) { this.onStatus('error'); toast('Не вдалося зберегти: сховище браузера переповнене', { error: true }); }
+  }
+  saveSettings(s) { this.data.settings = s; this._flush(); }
+  saveClient(c) { this.data.clients[c.id] = c; this._flush(); }
+  deleteClient(id) { delete this.data.clients[id]; this._flush(); }
+  async uploadFile(blob, name, type, id = uid('f_')) {
+    if (!this.idb) throw new Error('IndexedDB недоступний');
+    const meta = { id, name, type: type || blob.type || 'application/octet-stream', size: blob.size, createdAt: Date.now() };
+    await idbReq(this.idb.transaction('files', 'readwrite').objectStore('files').put({ ...meta, blob }));
+    return meta;
+  }
+  async downloadFile(id) {
+    const rec = await idbReq(this.idb.transaction('files').objectStore('files').get(id));
+    if (!rec) throw new Error('Файл не знайдено');
+    return rec.blob;
+  }
+  async deleteFile(id) { try { await idbReq(this.idb.transaction('files', 'readwrite').objectStore('files').delete(id)); } catch {} }
+  async wipe() { localStorage.removeItem(LS.local); try { await idbReq(this.idb.transaction('files', 'readwrite').objectStore('files').clear()); } catch {} }
+  status() { return 'local'; }
+}
+
+/* ---------- storage: Firebase (cloud) ---------- */
+class CloudStore {
+  constructor(ctx) {
+    this.mode = 'cloud'; this.ctx = ctx; this.uidv = ctx.user.uid; this.pending = 0; this.err = null; this.onStatus = () => {};
+    const { FB, db } = ctx;
+    this.settingsRef = FB.doc(db, 'users', this.uidv, 'data', 'settings');
+    this.clientsCol = FB.collection(db, 'users', this.uidv, 'clients');
+    window.addEventListener('online', () => this._emit());
+    window.addEventListener('offline', () => this._emit());
+  }
+  init(onRemote) {
+    const { FB } = this.ctx;
+    return new Promise((resolve, reject) => {
+      let gotS = false, gotC = false, settings = null, done = false;
+      const clients = [];
+      const finish = () => { if (gotS && gotC && !done) { done = true; resolve({ settings, clients }); } };
+      // Перший знімок із порожнього кешу не вважаємо істиною: чекаємо сервер (до 6 с), щоб не затерти налаштування.
+      let waitTimer = null;
+      this.unsubS = FB.onSnapshot(this.settingsRef, { includeMetadataChanges: true }, snap => {
+        if (!gotS) {
+          if (!snap.exists() && snap.metadata.fromCache && navigator.onLine) {
+            if (!waitTimer) waitTimer = setTimeout(() => { if (!gotS) { gotS = true; finish(); } }, 6000);
+            return;
+          }
+          clearTimeout(waitTimer); gotS = true; settings = snap.exists() ? snap.data() : null; finish(); return;
+        }
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) return;
+        onRemote({ type: 'settings', data: snap.data() });
+      }, e => { this._fail(e); if (!done) reject(e); });
+      this.unsubC = FB.onSnapshot(this.clientsCol, snap => {
+        if (!gotC) { gotC = true; snap.forEach(d => clients.push(d.data())); finish(); return; }
+        snap.docChanges().forEach(ch => {
+          if (ch.doc.metadata.hasPendingWrites) return;
+          if (ch.type === 'removed') onRemote({ type: 'clientRemoved', id: ch.doc.id });
+          else onRemote({ type: 'client', data: ch.doc.data() });
+        });
+      }, e => { this._fail(e); if (!done) reject(e); });
+    });
+  }
+  _fail(e) { console.error(e); this.err = e; this._emit(); }
+  _emit() { this.onStatus(this.status()); }
+  status() {
+    if (this.err) return 'error';
+    if (this.pending > 0) return navigator.onLine ? 'saving' : 'offline';
+    return navigator.onLine ? 'synced' : 'offline';
+  }
+  _track(p) {
+    this.pending++; this._emit();
+    p.then(() => { this.pending--; this.err = null; this._emit(); })
+     .catch(e => { this.pending--; this._fail(e); toast('Помилка синхронізації: ' + (e.code || e.message), { error: true }); });
+    return p;
+  }
+  saveSettings(s) { return this._track(this.ctx.FB.setDoc(this.settingsRef, s)); }
+  saveClient(c) { return this._track(this.ctx.FB.setDoc(this.ctx.FB.doc(this.clientsCol, c.id), c)); }
+  deleteClient(id) { return this._track(this.ctx.FB.deleteDoc(this.ctx.FB.doc(this.clientsCol, id))); }
+  _fileRef(id) { return this.ctx.FB.doc(this.ctx.db, 'users', this.uidv, 'files', id); }
+  _chunksCol(id) { return this.ctx.FB.collection(this.ctx.db, 'users', this.uidv, 'files', id, 'chunks'); }
+  async uploadFile(blob, name, type, id = uid('f_')) {
+    if (!navigator.onLine) throw new Error('Файли можна додавати лише онлайн');
+    const { FB } = this.ctx;
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const CH = 900 * 1024, n = Math.max(1, Math.ceil(buf.length / CH));
+    this.pending++; this._emit();
+    try {
+      for (let i = 0; i < n; i++) {
+        await FB.setDoc(FB.doc(this._chunksCol(id), String(i).padStart(4, '0')), { data: FB.Bytes.fromUint8Array(buf.subarray(i * CH, (i + 1) * CH)) });
+      }
+      const meta = { id, name, type: type || blob.type || 'application/octet-stream', size: blob.size, chunks: n, createdAt: Date.now() };
+      await FB.setDoc(this._fileRef(id), meta);
+      return meta;
+    } finally { this.pending--; this._emit(); }
+  }
+  async downloadFile(id) {
+    const { FB } = this.ctx;
+    const snap = await FB.getDocs(FB.query(this._chunksCol(id), FB.orderBy(FB.documentId())));
+    if (snap.empty) throw new Error('Файл не знайдено');
+    const parts = []; snap.forEach(d => parts.push(d.data().data.toUint8Array()));
+    return new Blob(parts);
+  }
+  async deleteFile(id) {
+    const { FB } = this.ctx;
+    try {
+      const snap = await FB.getDocs(this._chunksCol(id));
+      await Promise.all(snap.docs.map(d => FB.deleteDoc(d.ref)));
+      await FB.deleteDoc(this._fileRef(id));
+    } catch (e) { console.warn('deleteFile', e); }
+  }
+  stop() { this.unsubS && this.unsubS(); this.unsubC && this.unsubC(); }
+}
+
+/* ---------- app state ---------- */
+const S = {
+  store: null, settings: null, clients: new Map(), user: null, ctx: null,
+  ui: { open: {}, openTask: null, filter: 'all', q: '', sort: 'name', settingsTask: null, settingsTab: 'flow' },
+  sync: 'synced',
+};
+try { Object.assign(S.ui, JSON.parse(localStorage.getItem(LS.ui)) || {}); } catch {}
+const saveUi = debounce(() => { try { localStorage.setItem(LS.ui, JSON.stringify({ filter: S.ui.filter, sort: S.ui.sort })); } catch {} }, 300);
+
+const saveSettingsSoon = debounce(() => S.store && S.store.saveSettings(clone(S.settings)), 500);
+const clientTimers = new Map();
+function saveClientSoon(id) {
+  clearTimeout(clientTimers.get(id));
+  clientTimers.set(id, setTimeout(() => { clientTimers.delete(id); const c = S.clients.get(id); if (c) S.store.saveClient(clone(c)); }, 450));
+}
+function flushSaves() {
+  if (S.settings) saveSettingsSoon.flush();
+  for (const [id, t] of clientTimers) { clearTimeout(t); const c = S.clients.get(id); if (c) S.store.saveClient(clone(c)); }
+  clientTimers.clear();
+}
+window.addEventListener('pagehide', flushSaves);
+window.addEventListener('storage', e => {
+  if (e.key !== LS.local || !e.newValue || !S.store || S.store.mode !== 'local' || !S.settings) return;
+  try {
+    const d = JSON.parse(e.newValue); d.clients = d.clients || {};
+    S.store.data = d;
+    if (!saveSettingsSoon.pending() && d.settings) S.settings = normalizeSettings(clone(d.settings));
+    const pendingIds = new Set(clientTimers.keys());
+    for (const id of [...S.clients.keys()]) if (!pendingIds.has(id) && !d.clients[id]) S.clients.delete(id);
+    Object.values(d.clients).forEach(c => { if (!pendingIds.has(c.id)) S.clients.set(c.id, normalizeClient(clone(c))); });
+    softRender();
+  } catch (err) { console.warn(err); }
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSaves(); });
+
+function updateSettings(fn, { render: r = true } = {}) {
+  fn(S.settings); S.settings.updatedAt = Date.now();
+  saveSettingsSoon();
+  if (r) render();
+}
+function logTo(c, type, text, extra = {}) {
+  c.history.unshift({ id: uid('h_'), at: Date.now(), type, text, ...extra });
+  if (c.history.length > 600) c.history.length = 600;
+}
+function updateClient(id, fn, { log, render: r = true } = {}) {
+  const c = S.clients.get(id); if (!c) return;
+  fn(c); c.updatedAt = Date.now();
+  if (log) logTo(c, log.type, log.text, log.extra);
+  saveClientSoon(id);
+  if (r) render();
+}
+
+/* ---------- flow helpers ---------- */
+function clientStages(c) {
+  const stages = S.settings.stages.map(st => ({
+    id: st.id, title: st.title, description: st.description,
+    tasks: [...st.tasks.map(t => ({ ...t, custom: false })), ...c.customTasks.filter(t => t.stageId === st.id).map(t => ({ ...t, custom: true, attachments: [] }))],
+  }));
+  const orphan = c.customTasks.filter(t => !S.settings.stages.some(s => s.id === t.stageId));
+  if (orphan.length) stages.push({ id: '__extra', title: 'Додаткові пункти', description: 'Пункти клієнта, етап яких видалено з флоу', tasks: orphan.map(t => ({ ...t, custom: true, attachments: [] })) });
+  return stages;
+}
+const taskState = (c, tid) => c.progress[tid] || {};
+function effDue(c, t) {
+  const p = taskState(c, t.id);
+  if (p.due) return p.due;
+  if (t.dueDays !== null && t.dueDays !== undefined && t.dueDays !== '' && c.startDate) return addDays(c.startDate, t.dueDays);
+  return null;
+}
+function dueTone(iso) {
+  if (!iso) return null;
+  const d = diffDays(iso, todayISO());
+  if (d < 0) return 'overdue';
+  if (d === 0) return 'today';
+  if (d <= 3) return 'soon';
+  return 'later';
+}
+function dueLabel(iso) {
+  const d = diffDays(iso, todayISO());
+  if (d < 0) return `Прострочено ${-d} ${plural(-d, 'день', 'дні', 'днів')}`;
+  if (d === 0) return 'Сьогодні';
+  if (d === 1) return 'Завтра';
+  if (d <= 6) return `Через ${d} ${plural(d, 'день', 'дні', 'днів')}`;
+  return 'До ' + fmtDate(iso);
+}
+function progressOf(c) {
+  const stages = clientStages(c);
+  let total = 0, done = 0, current = null, next = null;
+  const stats = stages.map(st => {
+    let t = 0, d = 0, sk = 0;
+    st.tasks.forEach(task => { const p = taskState(c, task.id); if (p.skipped) sk++; else { t++; if (p.done) d++; } });
+    total += t; done += d;
+    const complete = t === d;
+    return { stage: st, total: t, done: d, skipped: sk, complete, allSkipped: t === 0 && sk > 0 };
+  });
+  for (const s of stats) {
+    if (!s.complete) {
+      current = s.stage;
+      next = s.stage.tasks.find(t => { const p = taskState(c, t.id); return !p.done && !p.skipped; });
+      break;
+    }
+  }
+  return { stages, stats, total, done, pct: total ? Math.round(done / total * 100) : 0, current, next, finished: total > 0 && done === total };
+}
+function dueItems(filterFn = () => true) {
+  const out = [];
+  for (const c of S.clients.values()) {
+    if (c.status === 'finished') continue;
+    clientStages(c).forEach(st => st.tasks.forEach(t => {
+      const p = taskState(c, t.id);
+      if (p.done || p.skipped) return;
+      const due = effDue(c, t);
+      if (due && filterFn(due)) out.push({ c, st, t, due });
+    }));
+  }
+  return out.sort((a, b) => a.due.localeCompare(b.due));
+}
+function allVars(c) {
+  const map = {};
+  if (c) { map['клієнт'] = c.name; map['шифр'] = c.code; }
+  S.settings.fields.forEach(f => { if (f.key && c) map[f.key] = c.fields[f.id] || ''; });
+  S.settings.vars.forEach(v => { if (v.key) map[v.key] = v.value || ''; });
+  return map;
+}
+function varKeys() {
+  const keys = BUILTIN_VARS.map(v => ({ key: v.key, label: v.label }));
+  S.settings.fields.forEach(f => f.key && keys.push({ key: f.key, label: f.label }));
+  S.settings.vars.forEach(v => v.key && keys.push({ key: v.key, label: 'Моя змінна' }));
+  return keys;
+}
+const VAR_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
+function fillText(text, c) {
+  const map = allVars(c), missing = new Set();
+  const out = String(text || '').replace(VAR_RE, (m, k) => { const v = map[k]; if (v) return v; missing.add(k); return m; });
+  return { text: out, missing: [...missing] };
+}
+function fillHtml(text, c) {
+  const map = allVars(c);
+  return esc(text).replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (m, k) => {
+    const key = k.replace(/&amp;/g, '&');
+    const v = c ? map[key] : '';
+    return v ? `<span class="var ok" title="{{${esc(key)}}}">${esc(v)}</span>` : `<span class="var" title="${c ? 'Не заповнено в картці клієнта' : 'Змінна'}">{{${k}}}</span>`;
+  });
+}
+function findTask(tid) {
+  for (const st of S.settings.stages) { const t = st.tasks.find(x => x.id === tid); if (t) return { st, t }; }
+  return null;
+}
+function collectFileIds() {
+  const ids = new Set();
+  S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && ids.add(a.fileId))));
+  for (const c of S.clients.values()) c.files.forEach(f => ids.add(f.id));
+  return ids;
+}
+
+/* ============ AM Flow — UI primitives ============ */
+
+/* ---------- toast ---------- */
+function toast(msg, { action, error = false, ms = 3800 } = {}) {
+  let host = $('.toasts');
+  if (!host) { host = document.createElement('div'); host.className = 'toasts'; host.setAttribute('role', 'status'); host.setAttribute('aria-live', 'polite'); document.body.appendChild(host); }
+  const el = document.createElement('div');
+  el.className = 'toast' + (error ? ' err' : '');
+  el.innerHTML = `${icon(error ? 'alert' : 'checkCircle', 17)}<span>${esc(msg)}</span>${action ? `<button type="button">${esc(action.label)}</button>` : ''}`;
+  const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 180); };
+  if (action) el.querySelector('button').onclick = () => { action.fn(); close(); };
+  host.appendChild(el);
+  while (host.children.length > 3) host.firstChild.remove();
+  setTimeout(close, action ? Math.max(ms, 6000) : ms);
+}
+
+/* ---------- modal ---------- */
+let modalStack = [];
+function openModal({ title, text = '', body = '', icon: ic = null, tone = '', wide = false, actions = [], onOpen }) {
+  return new Promise(resolve => {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-wrap';
+    wrap.innerHTML = `
+      <div class="modal ${wide ? 'wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="mt">
+        <div class="modal-head">
+          ${ic ? `<div class="modal-ico ${tone}">${icon(ic, 19)}</div>` : ''}
+          <div style="flex:1;min-width:0"><h3 id="mt">${esc(title)}</h3>${text ? `<p>${text}</p>` : ''}</div>
+          ${!ic ? `<button class="icon-btn sm" data-x aria-label="Закрити">${icon('x', 17)}</button>` : ''}
+        </div>
+        ${body ? `<form class="modal-body" onsubmit="return false">${body}</form>` : ''}
+        <div class="modal-foot">${actions.map((a, i) => `<button type="button" class="btn ${a.cls || ''}" data-i="${i}">${a.label}</button>`).join('')}</div>
+      </div>`;
+    const prevFocus = document.activeElement;
+    const close = val => {
+      wrap.remove(); modalStack = modalStack.filter(m => m !== api);
+      if (prevFocus && prevFocus.focus) try { prevFocus.focus({ preventScroll: true }); } catch {}
+      resolve(val);
+    };
+    const api = { wrap, close };
+    const collect = () => {
+      const data = {};
+      $$('[name]', wrap).forEach(el => { data[el.name] = el.type === 'checkbox' ? el.checked : el.value; });
+      $$('.seg[data-name]', wrap).forEach(sg => { const on = $('button.on', sg); data[sg.dataset.name] = on ? on.dataset.v : ''; });
+      return data;
+    };
+    const run = async a => {
+      if (a.value === undefined || a.value === false || a.value === null) return close(a.value ?? null);
+      if (a.validate) { const err = a.validate(collect(), wrap); if (err) return; }
+      close(a.value === 'form' ? collect() : a.value);
+    };
+    wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(null); });
+    wrap.addEventListener('click', e => {
+      const b = e.target.closest('[data-i]'); if (b) run(actions[+b.dataset.i]);
+      if (e.target.closest('[data-x]')) close(null);
+      const sb = e.target.closest('.seg[data-name] button');
+      if (sb) { $$('button', sb.parentElement).forEach(x => x.classList.toggle('on', x === sb)); }
+    });
+    wrap.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.stopPropagation(); close(null); }
+      if (e.key === 'Enter' && !e.shiftKey && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+        const primary = actions.findIndex(a => (a.cls || '').match(/primary|danger/));
+        if (primary > -1) { e.preventDefault(); run(actions[primary]); }
+      }
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { const p = actions.findIndex(a => (a.cls || '').match(/primary|danger/)); if (p > -1) run(actions[p]); }
+    });
+    document.body.appendChild(wrap);
+    modalStack.push(api);
+    const first = $('input:not([type=hidden]), textarea, select', wrap) || $('.btn.primary, .btn.danger', wrap);
+    setTimeout(() => first && first.focus(), 30);
+    onOpen && onOpen(wrap);
+  });
+}
+function confirmDialog({ title, text, confirm = 'Підтвердити', tone = 'danger', ic = 'alert' }) {
+  return openModal({
+    title, text, icon: ic, tone,
+    actions: [{ label: 'Скасувати', cls: 'ghost', value: false }, { label: confirm, cls: tone === 'danger' ? 'danger' : 'primary', value: true }],
+  });
+}
+
+/* ---------- popover menu ---------- */
+let openMenuEl = null;
+function closeMenu() { if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; } }
+function showMenu(anchor, items) {
+  closeMenu();
+  const m = document.createElement('div');
+  m.className = 'menu'; m.setAttribute('role', 'menu');
+  m.innerHTML = items.filter(Boolean).map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="menuitem" data-mi="${i}" class="${it.danger ? 'danger' : ''}">${it.icon ? icon(it.icon, 16) : ''}<span>${esc(it.label)}</span></button>`).join('');
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+  let left = r.right - mw, top = r.bottom + 6;
+  if (left < 8) left = Math.min(r.left, window.innerWidth - mw - 8);
+  if (top + mh > window.innerHeight - 8) top = r.top - mh - 6;
+  m.style.left = Math.max(8, left) + 'px'; m.style.top = Math.max(8, top) + 'px';
+  const list = items.filter(Boolean);
+  m.addEventListener('click', e => { const b = e.target.closest('[data-mi]'); if (!b) return; const it = list[+b.dataset.mi]; closeMenu(); it.fn && it.fn(); });
+  m.addEventListener('keydown', e => {
+    const btns = $$('button', m), i = btns.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); btns[(i + 1) % btns.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); btns[(i - 1 + btns.length) % btns.length].focus(); }
+    if (e.key === 'Escape') { closeMenu(); anchor.focus(); }
+  });
+  openMenuEl = m;
+  const fb = $('button', m); fb && fb.focus({ preventScroll: true });
+}
+document.addEventListener('mousedown', e => { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(); }, true);
+window.addEventListener('resize', closeMenu);
+document.addEventListener('scroll', closeMenu, true);
+
+/* ---------- theme ---------- */
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem(LS.theme, t); } catch {}
+  const meta = $('meta[name=theme-color]'); if (meta) meta.content = t === 'dark' ? '#151b29' : '#f4f6fb';
+}
+function currentTheme() { return document.documentElement.dataset.theme || 'light'; }
+
+/* ---------- small renderers ---------- */
+const avatarHtml = (c, cls = '') => `<div class="avatar ${cls}" style="background:${esc(c.color || colorFor(c.id))}">${esc(initials(c.code || c.name))}</div>`;
+const statusBadge = id => { const s = statusOf(id); return `<span class="badge ${s.tone}"><span class="bd"></span>${s.label}</span>`; };
+const ringHtml = (pct, done, sm = false) => `<div class="ring ${sm ? 'sm' : ''} ${done ? 'done' : ''}" style="--p:${pct}"><span>${sm ? '' : pct + '%'}</span></div>`;
+const progressBar = (pct, done) => `<div class="progress ${done ? 'done' : ''}"><i style="width:${pct}%"></i></div>`;
+function dueChip(iso, { short = false } = {}) {
+  if (!iso) return '';
+  const tone = dueTone(iso);
+  const cls = tone === 'overdue' ? 'red' : tone === 'today' ? 'amber' : tone === 'soon' ? 'blue' : 'outline';
+  return `<span class="badge ${cls}" title="Термін: ${fmtDate(iso)}">${icon('clock', 12)}${short && tone === 'later' ? fmtDate(iso) : dueLabel(iso)}</span>`;
+}
+function emptyState({ ic = 'info', title, text = '', actions = '', sm = false }) {
+  return `<div class="empty ${sm ? 'sm' : ''}"><div class="empty-ico">${icon(ic, 24)}</div><h3>${esc(title)}</h3>${text ? `<p>${text}</p>` : ''}${actions}</div>`;
+}
+
+/* ============ AM Flow — views ============ */
+
+function parseRoute() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [path, qs] = h.split('?');
+  return { parts: path.split('/').filter(Boolean), q: Object.fromEntries(new URLSearchParams(qs || '')) };
+}
+const go = hash => { if (location.hash === hash) render(); else location.hash = hash; };
+
+/* ---------- shell ---------- */
+function shellHtml() {
+  return `
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar" aria-label="Навігація"></aside>
+    <div class="scrim" data-act="closeNav"></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="icon-btn" data-act="openNav" aria-label="Меню">${icon('menu', 20)}</button>
+        <div class="brand-mark" style="width:26px;height:26px;border-radius:8px">${icon('route', 15, 2.2)}</div>
+        <div class="brand-name">AM Flow</div>
+        <div class="sp"></div>
+        <button class="icon-btn" data-act="newClient" aria-label="Новий клієнт">${icon('plus', 19)}</button>
+      </header>
+      <main id="main" tabindex="-1"></main>
+    </div>
+  </div>`;
+}
+
+function renderSidebar(r) {
+  const sb = $('#sidebar'); if (!sb) return;
+  const p0 = r.parts[0] || '';
+  const all = [...S.clients.values()];
+  const live = all.filter(c => c.status !== 'finished').sort((a, b) => a.name.localeCompare(b.name, 'uk'));
+  const overdueSet = new Set(dueItems(d => dueTone(d) === 'overdue').map(x => x.c.id));
+  const syncLabel = { synced: 'Синхронізовано', saving: 'Зберігаю…', offline: 'Офлайн · зміни збережено локально', error: 'Помилка синхронізації', local: 'Дані лише в цьому браузері' }[S.sync] || '';
+  const syncCls = S.sync === 'local' ? 'offline' : S.sync;
+  sb.innerHTML = `
+    <div class="brand">
+      <div class="brand-mark">${icon('route', 17, 2.2)}</div>
+      <div><div class="brand-name">AM Flow</div><div class="brand-sub">Робочий флоу акаунт-менеджера</div></div>
+    </div>
+    <nav class="nav">
+      <a class="nav-item ${p0 === '' ? 'active' : ''}" href="#/">${icon('grid', 17)}Огляд</a>
+      <a class="nav-item ${p0 === 'clients' || p0 === 'c' ? 'active' : ''}" href="#/clients">${icon('users', 17)}Клієнти<span class="count">${all.length || ''}</span></a>
+      <a class="nav-item ${p0 === 'settings' ? 'active' : ''}" href="#/settings">${icon('sliders', 17)}Налаштування</a>
+    </nav>
+    <div class="nav-section">У роботі</div>
+    <div class="nav-clients">
+      ${live.map(c => { const pr = progressOf(c); return `
+        <a class="nav-client ${p0 === 'c' && r.parts[1] === c.id ? 'active' : ''}" href="#/c/${c.id}" title="${esc(c.name)} · ${pr.pct}%">
+          ${ringHtml(pr.pct, pr.finished, true)}<span class="nm">${esc(c.name)}</span>
+          ${overdueSet.has(c.id) ? `<span class="badge red" style="height:18px;padding:0 5px" title="Є прострочені пункти">${icon('clock', 11)}</span>` : c.code ? `<span class="muted" style="font-size:11.5px;font-family:var(--mono)">${esc(c.code)}</span>` : ''}
+        </a>`; }).join('') || `<div class="muted" style="padding:6px 10px;font-size:13px">Поки немає клієнтів</div>`}
+      <button class="nav-item" data-act="newClient" style="margin-top:4px;color:var(--text-3)">${icon('plus', 16)}Новий клієнт</button>
+    </div>
+    <div class="sidebar-foot">
+      <div class="sync ${syncCls}" title="${esc(syncLabel)}"><span class="dot"></span><span>${esc(syncLabel)}</span></div>
+      <div class="foot-row">
+        <div class="user-chip">${icon(S.store.mode === 'cloud' ? 'cloud' : 'drive', 15)}<span>${esc(S.user ? S.user.email : 'Локальний режим')}</span></div>
+        <button class="icon-btn sm" data-act="toggleTheme" aria-label="Змінити тему" title="${currentTheme() === 'dark' ? 'Світла тема' : 'Темна тема'}">${icon(currentTheme() === 'dark' ? 'sun' : 'moon', 16)}</button>
+        ${S.store.mode === 'cloud' ? `<button class="icon-btn sm" data-act="logout" aria-label="Вийти" title="Вийти">${icon('logout', 16)}</button>` : ''}
+      </div>
+    </div>`;
+}
+
+/* ---------- dashboard ---------- */
+function viewDashboard() {
+  const all = [...S.clients.values()];
+  const live = all.filter(c => c.status !== 'finished');
+  const t = todayISO();
+  const overdue = dueItems(d => d < t);
+  const todayItems = dueItems(d => d === t);
+  const week = dueItems(d => d >= t && d <= addDays(t, 7));
+  const attentionAll = dueItems(d => d <= addDays(t, 7));
+  const attention = attentionAll.slice(0, 8);
+  const weekAgo = Date.now() - 7 * 86400000;
+  let doneWeek = 0;
+  all.forEach(c => Object.values(c.progress).forEach(p => { if (p.done && p.doneAt >= weekAgo) doneWeek++; }));
+  const feed = [];
+  all.forEach(c => c.history.forEach(h => { if (h.type !== 'field') feed.push({ c, h }); }));
+  feed.sort((a, b) => b.h.at - a.h.at);
+  const head = '';
+
+  if (!all.length) {
+    const noFlow = !S.settings.stages.length;
+    return `<div class="page">${head}<div class="card">${emptyState({
+      ic: 'route', title: noFlow ? 'Почнімо з флоу' : 'Додайте першого клієнта',
+      text: noFlow ? 'Спершу імпортуйте чернетку флоу з файлу або створіть етапи вручну. Потім додайте клієнта: картка підхопить етапи автоматично.' : 'Створіть картку клієнта. Флоу з налаштувань підтягнеться автоматично, і ви побачите, що робити далі.',
+      actions: `<div class="row" style="justify-content:center">${noFlow ? `<a class="btn primary" href="#/settings">${icon('layers', 16)}Налаштувати флоу</a><button class="btn" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>` : `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>`}</div>`,
+    })}</div></div>`;
+  }
+
+  const stat = (ic, tone, label, val, foot) => `<div class="card stat"><div class="stat-top">${label}<div class="stat-ico ${tone}">${icon(ic, 16)}</div></div><div class="stat-val">${val}</div><div class="stat-foot">${foot}</div></div>`;
+  const onb = live.filter(c => c.status === 'onboarding').length;
+
+  const rows = live.map(c => ({ c, pr: progressOf(c) })).sort((a, b) => a.pr.pct - b.pr.pct);
+  return `<div class="page">${head}
+    <div class="grid cols-4 mb-16">
+      ${stat('users', '', 'Клієнти в роботі', live.length, onb ? `${onb} на онбордингу` : 'Без онбордингів')}
+      ${stat('alert', 'red', 'Прострочено', overdue.length, overdue.length ? `у ${new Set(overdue.map(x => x.c.id)).size} ${plural(new Set(overdue.map(x => x.c.id)).size, 'клієнта', 'клієнтів', 'клієнтів')}` : 'Усе вчасно')}
+      ${stat('calendar', 'amber', 'На тиждень', week.length, todayItems.length ? `${todayItems.length} на сьогодні` : 'На сьогодні нічого')}
+      ${stat('checkCircle', 'green', 'Виконано за 7 днів', doneWeek, plural(doneWeek, 'пункт', 'пункти', 'пунктів'))}
+    </div>
+    <div class="grid dash">
+      <div class="grid">
+        <div class="card">
+          <div class="card-head"><div><h2 class="card-title">Потребує уваги</h2><div class="card-sub">Прострочені пункти й терміни на найближчий тиждень</div></div></div>
+          <div class="list" style="margin-top:10px">
+            ${attention.length ? attention.map(x => `
+              <a class="list-item" href="#/c/${x.c.id}?task=${x.t.id}">
+                ${avatarHtml(x.c, 'sm')}
+                <div class="grow"><div class="t">${esc(x.t.title)}</div><div class="s">${esc(x.c.name)} · ${esc(x.st.title)}</div></div>
+                ${dueChip(x.due)}
+              </a>`).join('') : emptyState({ ic: 'checkCircle', title: 'Усе під контролем', text: 'Немає прострочених пунктів і термінів на найближчий тиждень.', sm: true })}
+            ${attentionAll.length > attention.length ? `<div class="list-more">І ще ${attentionAll.length - attention.length} ${plural(attentionAll.length - attention.length, 'пункт', 'пункти', 'пунктів')} — дивіться в картках клієнтів</div>` : ''}
+          </div>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="card-head"><h2 class="card-title">Клієнти в роботі</h2><a class="btn ghost sm" href="#/clients">Усі ${icon('chevR', 14)}</a></div>
+          <div style="overflow-x:auto;margin-top:6px">
+          ${rows.length ? `<table class="table" style="table-layout:fixed"><thead><tr><th style="width:38%">Клієнт</th><th class="hide-m">Етап і наступний крок</th><th style="width:130px">Прогрес</th></tr></thead><tbody>
+            ${rows.map(({ c, pr }) => `<tr data-act="openClient" data-id="${c.id}">
+              <td><div class="cell-client">${avatarHtml(c)}<div style="min-width:0"><div class="nm cell-trunc" style="max-width:100%">${esc(c.name)}</div><div class="cell-muted">${statusOf(c.status).label}${c.code ? ' · ' + esc(c.code) : ''}</div></div></div></td>
+              <td class="hide-m"><div class="cell-trunc" style="max-width:100%;font-weight:500">${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : '—'}</div><div class="cell-muted cell-trunc" style="max-width:100%">${pr.next ? 'Далі: ' + esc(pr.next.title) : ''}</div></td>
+              <td><div class="row">${progressBar(pr.pct, pr.finished)}<span class="cell-muted" style="width:36px;text-align:right;flex-shrink:0">${pr.pct}%</span></div></td>
+            </tr>`).join('')}</tbody></table>` : emptyState({ ic: 'users', title: 'Немає активних клієнтів', sm: true })}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">Остання активність</h2></div>
+        <div class="timeline" style="padding-top:4px">
+          ${feed.length ? feed.slice(0, 14).map(({ c, h }) => tlItem(h, c)).join('') : `<div class="muted" style="padding:14px 0">Тут з'являтимуться ваші дії</div>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- clients ---------- */
+function viewClients() {
+  const all = [...S.clients.values()];
+  const q = S.ui.q.trim().toLowerCase();
+  const counts = { all: all.length }; STATUSES.forEach(s => counts[s.id] = all.filter(c => c.status === s.id).length);
+  let list = all.filter(c => (S.ui.filter === 'all' || c.status === S.ui.filter) && (!q || (c.name + ' ' + c.code + ' ' + Object.values(c.fields).join(' ')).toLowerCase().includes(q)));
+  const withPr = list.map(c => ({ c, pr: progressOf(c) }));
+  if (S.ui.sort === 'progress') withPr.sort((a, b) => a.pr.pct - b.pr.pct);
+  else if (S.ui.sort === 'recent') withPr.sort((a, b) => b.c.updatedAt - a.c.updatedAt);
+  else withPr.sort((a, b) => a.c.name.localeCompare(b.c.name, 'uk'));
+  return `<div class="page">
+    <div class="page-head">
+      <div><h1 class="page-title">Клієнти</h1><div class="page-sub">${all.length} ${plural(all.length, 'клієнт', 'клієнти', 'клієнтів')} · однаковий флоу для всіх</div></div>
+      <button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>
+    </div>
+    <div class="toolbar">
+      <label class="search"><span class="sr-only">Пошук</span>${icon('search', 16)}<input class="input" id="client-search" placeholder="Пошук за назвою, шифром, полями" value="${esc(S.ui.q)}" data-in="search"></label>
+      <div class="seg" role="tablist">
+        <button class="${S.ui.filter === 'all' ? 'on' : ''}" data-act="filter" data-v="all">Усі · ${counts.all}</button>
+        ${STATUSES.map(s => `<button class="${S.ui.filter === s.id ? 'on' : ''}" data-act="filter" data-v="${s.id}">${s.label} · ${counts[s.id]}</button>`).join('')}
+      </div>
+      <div class="sp"></div>
+      <select class="select" style="width:auto" data-in="sort" aria-label="Сортування">
+        <option value="name" ${S.ui.sort === 'name' ? 'selected' : ''}>За назвою</option>
+        <option value="progress" ${S.ui.sort === 'progress' ? 'selected' : ''}>За прогресом</option>
+        <option value="recent" ${S.ui.sort === 'recent' ? 'selected' : ''}>Нещодавно змінені</option>
+      </select>
+    </div>
+    ${withPr.length ? `<div class="client-grid">${withPr.map(({ c, pr }) => {
+      const od = dueItems(d => dueTone(d) === 'overdue').filter(x => x.c.id === c.id).length;
+      return `<a class="card client-card" href="#/c/${c.id}">
+        <div class="cc-top">${avatarHtml(c)}<div style="min-width:0;flex:1"><div class="nm">${esc(c.name)}</div><div class="cc-meta">${c.code ? `<span class="code-chip">${esc(c.code)}</span>` : ''}<span>${langOf(c.lang).short}</span></div></div>${statusBadge(c.status)}</div>
+        <div><div class="cc-row"><span>${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : 'Флоу порожній'}</span><span>${pr.done}/${pr.total}</span></div>${progressBar(pr.pct, pr.finished)}</div>
+        <div class="cc-next">${icon('target', 15)}<span>${pr.next ? `<b>Далі:</b> ${esc(pr.next.title)}` : 'Немає невиконаних пунктів'}</span></div>
+        ${od ? `<div><span class="badge red">${icon('clock', 12)}${od} ${plural(od, 'прострочений пункт', 'прострочені пункти', 'прострочених пунктів')}</span></div>` : ''}
+      </a>`; }).join('')}</div>`
+    : `<div class="card">${all.length ? emptyState({ ic: 'search', title: 'Нічого не знайдено', text: 'Спробуйте інший запит або фільтр.' }) : emptyState({ ic: 'users', title: 'Ще немає клієнтів', text: 'Створіть першу картку клієнта: флоу підтягнеться автоматично.', actions: `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>` })}</div>`}
+  </div>`;
+}
+
+/* ---------- client ---------- */
+function viewClient(c, tab, q) {
+  const pr = progressOf(c);
+  const hist = c.history.length;
+  const tabs = [
+    { id: 'process', label: 'Процес', count: `${pr.done}/${pr.total}` },
+    { id: 'info', label: 'Інфо', count: c.notes.length || '' },
+    { id: 'history', label: 'Історія', count: hist },
+  ];
+  let body = '';
+  if (tab === 'info') body = viewClientInfo(c);
+  else if (tab === 'history') body = viewClientHistory(c);
+  else body = viewClientProcess(c, pr, q);
+  return `<div class="page">
+    <div class="crumbs"><a href="#/clients">Клієнти</a>${icon('chevR', 13)}<span>${esc(c.name)}</span></div>
+    <div class="client-head">
+      ${avatarHtml(c, 'lg')}
+      <div class="title-wrap">
+        <h1>${esc(c.name)} ${c.code ? `<span class="code-chip" style="font-size:13px">${esc(c.code)}</span>` : ''}</h1>
+        <div class="meta">
+          <select class="select status-select" data-in="cstatus" aria-label="Статус клієнта">${STATUSES.map(s => `<option value="${s.id}" ${c.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
+          <span class="badge outline" title="Мова комунікації">${icon('globe', 12)}${langOf(c.lang).name}</span>
+          <span>Старт ${fmtDate(c.startDate)}</span>
+        </div>
+      </div>
+      <div class="head-actions">
+        <button class="btn" data-act="editClient">${icon('edit', 15)}Редагувати</button>
+        <button class="icon-btn" data-act="clientMenu" aria-label="Ще дії">${icon('more', 18)}</button>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      ${tabs.map(t => `<a class="tab ${tab === t.id ? 'active' : ''}" role="tab" aria-selected="${tab === t.id}" href="#/c/${c.id}/${t.id}">${t.label}${t.count !== '' ? `<span class="count">${t.count}</span>` : ''}</a>`).join('')}
+    </div>
+    ${body}
+  </div>`;
+}
+
+function stageIsOpen(c, st, pr) {
+  const o = S.ui.open[c.id] || {};
+  if (st.id in o) return o[st.id];
+  return pr.current ? pr.current.id === st.id : false;
+}
+
+function viewClientProcess(c, pr, q) {
+  if (!pr.stages.length) {
+    return `<div class="card">${emptyState({ ic: 'layers', title: 'Флоу ще порожній', text: 'Етапи й підзадачі однакові для всіх клієнтів і налаштовуються в одному місці.', actions: `<a class="btn primary" href="#/settings">${icon('sliders', 16)}Налаштувати флоу</a>` })}</div>`;
+  }
+  const nextDue = pr.next ? effDue(c, pr.next) : null;
+  return `
+    <div class="card proc-summary">
+      <div class="big-ring ${pr.finished ? 'done' : ''}" style="--p:${pr.pct}"><div>${pr.pct}%</div></div>
+      <div class="ps-info">
+        <div class="l1">${pr.finished ? 'Усі етапи пройдено' : 'Поточний етап'}</div>
+        <div class="l2">${pr.current ? esc(pr.current.title) : 'Флоу завершено 🎉'}</div>
+        <div class="l3">${pr.next ? `${icon('target', 14)}Наступний крок: <b>${esc(pr.next.title)}</b> ${dueChip(nextDue)}` : 'Немає невиконаних пунктів'}</div>
+      </div>
+      <div class="ps-side"><div><div class="k">Виконано</div><div class="v">${pr.done} з ${pr.total}</div></div><div><div class="k">Старт</div><div class="v">${fmtDate(c.startDate)}</div></div></div>
+    </div>
+    <div class="stepper" role="list">
+      ${pr.stats.map((s, i) => `<button class="step ${s.complete && s.total ? 'done' : ''} ${s.allSkipped ? 'skipped' : ''} ${pr.current && pr.current.id === s.stage.id ? 'current' : ''}" data-act="jumpStage" data-sid="${s.stage.id}" role="listitem">
+        <span class="n">${s.complete && (s.total || s.allSkipped) ? icon(s.allSkipped ? 'ban' : 'check', 12, 3) : i + 1}</span>${esc(s.stage.title)}</button>`).join('')}
+    </div>
+    ${pr.stats.map((s, i) => stageHtml(c, s, i, pr)).join('')}`;
+}
+
+function stageHtml(c, s, i, pr) {
+  const st = s.stage;
+  const open = stageIsOpen(c, st, pr);
+  const isCur = pr.current && pr.current.id === st.id;
+  const complete = s.complete && s.total > 0;
+  const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
+  return `<section class="card stage ${open ? 'open' : ''} ${isCur ? 'current' : ''} ${complete ? 'complete' : ''} ${s.allSkipped ? 'skipped' : ''}" id="stage-${st.id}">
+    <div class="stage-head" data-act="toggleStage" data-sid="${st.id}" role="button" tabindex="0" aria-expanded="${open}">
+      <div class="stage-num">${s.allSkipped ? icon('ban', 14, 2.6) : complete ? icon('check', 14, 3) : i + 1}</div>
+      <div class="stage-title"><div class="t">${esc(st.title)}</div>${st.description ? `<div class="d">${esc(st.description)}</div>` : ''}</div>
+      <div class="stage-prog">${s.allSkipped ? '<span class="badge">Пропущено</span>' : `${progressBar(pct, complete)}<span>${s.done}/${s.total}</span>`}</div>
+      ${st.id !== '__extra' ? `<button class="icon-btn sm" data-act="stageMenu" data-sid="${st.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>` : ''}
+      <span class="chev">${icon('chevR', 17)}</span>
+    </div>
+    <div class="stage-body">
+      ${st.tasks.length ? st.tasks.map(t => taskHtml(c, t)).join('') : `<div class="muted" style="padding:14px 18px">У цьому етапі ще немає пунктів</div>`}
+      ${st.id !== '__extra' ? `<button class="add-task" data-act="addCustomTask" data-sid="${st.id}">${icon('plus', 15)}Додати пункт лише для цього клієнта</button>` : ''}
+    </div>
+  </section>`;
+}
+
+function taskHtml(c, t) {
+  const p = taskState(c, t.id);
+  const open = S.ui.openTask === t.id;
+  const due = effDue(c, t);
+  const cnt = k => t.attachments.filter(a => a.kind === k).length;
+  const nText = cnt('text'), nFile = cnt('file'), nLink = cnt('link');
+  const subs = [];
+  if (p.done) subs.push(`<span class="it" style="color:var(--success)">${icon('check', 13, 2.6)}${p.doneAt ? 'Виконано ' + fmtTs(p.doneAt) : 'Виконано раніше'}</span>`);
+  if (nText) subs.push(`<span class="it">${icon('msg', 13)}${nText} ${plural(nText, 'шаблон', 'шаблони', 'шаблонів')}</span>`);
+  if (nFile) subs.push(`<span class="it">${icon('clip', 13)}${nFile}</span>`);
+  if (nLink) subs.push(`<span class="it">${icon('link', 13)}${nLink}</span>`);
+  if (p.note) subs.push(`<span class="it">${icon('note', 13)}Нотатка</span>`);
+  if (!p.done && !p.skipped && due) subs.push(`<span class="due-m">${dueChip(due)}</span>`);
+  return `<div class="task ${p.done ? 'done' : ''} ${p.skipped ? 'skipped' : ''} ${open ? 'open' : ''}" id="task-${t.id}">
+    <div class="task-row" data-act="toggleTask" data-tid="${t.id}">
+      <button class="switch" role="switch" id="sw-${t.id}" aria-checked="${!!p.done}" aria-label="Виконано: ${esc(t.title)}" data-act="toggleDone" data-tid="${t.id}" ${p.skipped ? 'disabled' : ''}></button>
+      <div class="task-main">
+        <div class="task-title"><span class="tt">${esc(t.title)}</span>${t.custom ? '<span class="badge violet">Лише для клієнта</span>' : ''}${p.skipped ? '<span class="badge">Не потрібно</span>' : ''}</div>
+        ${subs.length ? `<div class="task-sub">${subs.join('')}</div>` : ''}
+      </div>
+      <div class="task-meta">
+        ${!p.done && !p.skipped ? dueChip(due) : ''}
+        <button class="icon-btn sm" data-act="taskMenu" data-tid="${t.id}" aria-label="Дії з пунктом">${icon('more', 17)}</button>
+        <span class="chev" style="transform:rotate(${open ? 90 : 0}deg)">${icon('chevR', 16)}</span>
+      </div>
+    </div>
+    ${open ? `<div class="task-body">${taskBodyHtml(c, t, p, due)}</div>` : ''}
+  </div>`;
+}
+
+function attLangFor(c, a) {
+  const chosen = (S.ui.attLang || {})[a.id];
+  if (chosen && a.texts[chosen]) return chosen;
+  if (a.texts[c.lang]) return c.lang;
+  return LANGS.find(l => a.texts[l.id])?.id || 'uk';
+}
+
+function attViewHtml(a, c) {
+  if (a.kind === 'text') {
+    const lang = c ? attLangFor(c, a) : ((S.ui.attLang || {})[a.id] || 'uk');
+    const txt = a.texts[lang] || '';
+    return `<div class="att">
+      <div class="att-head">
+        <div class="t">${icon('msg', 15)}${esc(a.title || 'Шаблон повідомлення')}</div>
+        <div class="seg" aria-label="Мова шаблону">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="attLang" data-aid="${a.id}" data-lang="${l.id}" ${a.texts[l.id] ? '' : 'disabled title="Немає перекладу"'}>${l.short}</button>`).join('')}</div>
+        <button class="btn soft sm" data-act="copyAtt" data-aid="${a.id}" data-lang="${lang}" ${txt ? '' : 'disabled'}>${icon('copy', 14)}Копіювати</button>
+      </div>
+      <div class="att-text ${txt ? '' : 'empty-lang'}">${txt ? fillHtml(txt, c) : 'Текст для цієї мови ще не додано'}</div>
+    </div>`;
+  }
+  if (a.kind === 'file') {
+    return `<div class="att"><div class="att-file"><div class="ico">${icon('file', 17)}</div><div class="grow"><div class="nm">${esc(a.name)}</div><div class="sz">${fmtSize(a.size || 0)}</div></div>
+      <button class="btn sm" data-act="dlFile" data-fid="${a.fileId}" data-name="${esc(a.name)}">${icon('download', 14)}Завантажити</button></div></div>`;
+  }
+  if (a.kind === 'link') {
+    let host = ''; try { host = new URL(a.url).host; } catch {}
+    return `<div class="att"><div class="att-file"><div class="ico">${icon('link', 17)}</div><div class="grow"><div class="nm">${esc(a.title || a.url)}</div><div class="sz">${esc(host)}</div></div>
+      <button class="btn soft sm" data-act="copyLink" data-url="${esc(a.url)}" title="Копіювати посилання">${icon('copy', 14)}</button>
+      ${a.url ? `<a class="btn sm" href="${esc(a.url)}" target="_blank" rel="noopener">${icon('ext', 14)}Відкрити</a>` : ''}</div></div>`;
+  }
+  return '';
+}
+
+function taskBodyHtml(c, t, p, due) {
+  const auto = t.dueDays !== null && t.dueDays !== undefined && t.dueDays !== '' ? addDays(c.startDate, t.dueDays) : null;
+  return `
+    ${t.description ? `<p class="task-desc">${esc(t.description)}</p>` : ''}
+    ${t.attachments.length ? `<div class="atts">${t.attachments.map(a => attViewHtml(a, c)).join('')}</div>` : ''}
+    <div class="task-tools">
+      <div class="field">
+        <div class="mini-label">Термін</div>
+        <div class="row">
+          <input type="date" class="input" style="width:170px" value="${esc(due || '')}" data-in="taskDue" data-tid="${t.id}" aria-label="Термін виконання">
+          ${p.due ? `<button class="btn ghost sm" data-act="resetDue" data-tid="${t.id}" title="${auto ? 'Повернути рекомендований: ' + fmtDate(auto) : 'Прибрати термін'}">${icon('undo', 14)}${auto ? 'Рекомендований' : 'Прибрати'}</button>` : ''}
+        </div>
+      </div>
+      <div class="field" style="flex:1;min-width:240px">
+        <div class="mini-label">Нотатка до пункту</div>
+        <textarea class="textarea" rows="2" style="min-height:38px" placeholder="Що важливо пам'ятати саме для цього клієнта" data-in="taskNote" data-tid="${t.id}">${esc(p.note || '')}</textarea>
+      </div>
+    </div>`;
+}
+
+function fieldControl(f, val) {
+  const attrs = `data-in="cfield" data-fid="${f.id}" data-prev="${esc(val || '')}" aria-label="${esc(f.label)}"`;
+  const common = `class="inline-input" ${attrs}`;
+  if (f.type === 'textarea') return `<textarea class="inline-input auto" ${attrs} rows="2" placeholder="—">${esc(val || '')}</textarea>`;
+  if (f.type === 'select') return `<select class="inline-input select" ${attrs}><option value="">—</option>${(f.options || []).map(o => `<option ${o === val ? 'selected' : ''}>${esc(o)}</option>`).join('')}${val && !(f.options || []).includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select>`;
+  if (f.type === 'date') return `<input type="date" ${common} value="${esc(val || '')}" style="max-width:200px">`;
+  if (f.type === 'url') return `<input type="url" ${common} value="${esc(val || '')}" placeholder="https://…">${val ? `<a class="ext" href="${esc(val)}" target="_blank" rel="noopener">${icon('ext', 12)}Відкрити</a>` : ''}`;
+  return `<textarea class="inline-input auto" data-single ${attrs} rows="1" placeholder="—">${esc(val || '')}</textarea>`;
+}
+
+function viewClientInfo(c) {
+  const groups = [];
+  S.settings.fields.forEach(f => { let g = groups.find(x => x.name === f.group); if (!g) groups.push(g = { name: f.group, fields: [] }); g.fields.push(f); });
+  const core = `
+    <div class="frow"><div class="fl">Назва клієнта</div><div class="fv"><input class="inline-input" data-in="cname" value="${esc(c.name)}" data-prev="${esc(c.name)}" aria-label="Назва клієнта"></div></div>
+    <div class="frow"><div class="fl">Шифр проєкту</div><div class="fv"><input class="inline-input" data-in="ccode" value="${esc(c.code)}" data-prev="${esc(c.code)}" style="font-family:var(--mono);text-transform:uppercase" placeholder="—" aria-label="Шифр проєкту"></div></div>
+    <div class="frow"><div class="fl">Мова комунікації</div><div class="fv"><select class="inline-input select" data-in="clang" aria-label="Мова комунікації">${LANGS.map(l => `<option value="${l.id}" ${c.lang === l.id ? 'selected' : ''}>${l.name}</option>`).join('')}</select></div></div>
+    <div class="frow"><div class="fl">Дата старту</div><div class="fv"><input type="date" class="inline-input" data-in="cstart" value="${esc(c.startDate)}" style="max-width:200px" aria-label="Дата старту"></div></div>`;
+  const firstIsCore = groups.length && groups[0].name === 'Основне';
+  const groupsHtml = (firstIsCore ? groups : [{ name: 'Основне', fields: [] }, ...groups]).map((g, gi) => `
+    <div class="fgroup"><div class="fgroup-title">${esc(g.name)}</div>
+      ${gi === 0 ? core : ''}
+      ${g.fields.map(f => `<div class="frow"><div class="fl">${esc(f.label)}${f.key ? ` <span class="muted" style="font-family:var(--mono);font-size:11px" title="Змінна для шаблонів">{{${esc(f.key)}}}</span>` : ''}</div><div class="fv">${fieldControl(f, c.fields[f.id])}</div></div>`).join('')}
+    </div>`).join('<div style="border-top:1px solid var(--border)"></div>');
+
+  const notes = [...c.notes].sort((a, b) => b.createdAt - a.createdAt);
+  return `<div class="info-layout">
+    <div class="card" style="padding-bottom:6px">${groupsHtml}
+      <div class="row" style="padding:8px 20px 12px"><a class="btn ghost sm" href="#/settings/fields">${icon('sliders', 14)}Налаштувати поля</a><span class="muted" style="font-size:12.5px">Зміни зберігаються автоматично</span></div>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <div class="card-head" style="padding-bottom:12px"><h2 class="card-title">Нотатки</h2><span class="card-sub">${notes.length || ''}</span></div>
+        <div class="notes-composer" style="border-top:1px solid var(--border)">
+          <textarea class="textarea" id="note-new" placeholder="Що важливо не забути: домовленості, нюанси, ідеї…"></textarea>
+          <div class="row" style="margin-top:8px"><span class="muted" style="font-size:12px"><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></span><div class="sp"></div><button class="btn primary sm" data-act="addNote">${icon('plus', 14)}Додати</button></div>
+        </div>
+        ${notes.length ? notes.map(n => `<div class="note" id="note-${n.id}">
+          <div class="note-head">${icon('clock', 12)}${fmtTsFull(n.createdAt)}${n.updatedAt && n.updatedAt !== n.createdAt ? ' · змінено' : ''}<span class="sp"></span>
+            <button class="icon-btn sm" data-act="editNote" data-nid="${n.id}" aria-label="Редагувати">${icon('edit', 14)}</button>
+            <button class="icon-btn sm danger" data-act="delNote" data-nid="${n.id}" aria-label="Видалити">${icon('trash', 14)}</button></div>
+          <div class="note-text">${esc(n.text)}</div></div>`).join('') : `<div class="muted" style="padding:16px 18px;font-size:13px">Поки немає нотаток</div>`}
+      </div>
+      <div class="card">
+        <div class="card-head" style="padding-bottom:12px"><h2 class="card-title">Файли клієнта</h2><span class="card-sub">до ${fmtSize(MAX_FILE)}</span></div>
+        <div style="padding:0 16px 16px">
+          <div class="dropzone" data-act="uploadClientFile" data-drop="client" role="button" tabindex="0">${icon('upload', 18)}<div style="margin-top:4px"><b>Оберіть файл</b> або перетягніть сюди</div></div>
+          ${c.files.length ? `<div class="atts" style="margin-top:12px">${c.files.map(f => `<div class="att"><div class="att-file"><div class="ico">${icon('file', 17)}</div><div class="grow"><div class="nm">${esc(f.name)}</div><div class="sz">${fmtSize(f.size)} · ${fmtTs(f.createdAt)}</div></div>
+            <button class="icon-btn sm" data-act="dlFile" data-fid="${f.id}" data-name="${esc(f.name)}" aria-label="Завантажити">${icon('download', 16)}</button>
+            <button class="icon-btn sm danger" data-act="delClientFile" data-fid="${f.id}" aria-label="Видалити">${icon('trash', 16)}</button></div></div>`).join('')}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+const HIST = {
+  created: ['plus', 'blue'], done: ['check', 'green'], undone: ['undo', 'amber'], skip: ['ban', ''], unskip: ['undo', ''],
+  due: ['clock', 'blue'], note: ['note', 'violet'], file: ['clip', 'blue'], fileDel: ['trash', 'red'], field: ['edit', ''],
+  status: ['flag', 'blue'], custom: ['plus', 'violet'], customDel: ['trash', 'red'], stage: ['layers', 'green'],
+};
+function tlItem(h, c) {
+  const [ic, tone] = HIST[h.type] || ['info', ''];
+  return `<div class="tl-item"><div class="tl-ico ${tone}">${icon(ic, 14, 2.4)}</div>
+    <div class="tl-text">${c ? `<a class="cl" href="#/c/${c.id}" style="color:var(--text)">${esc(c.name)}</a> · ` : ''}${esc(h.text)}</div>
+    <div class="tl-time" title="${fmtTsFull(h.at)}">${c ? relTime(h.at) : fmtTime(h.at)}</div></div>`;
+}
+function viewClientHistory(c) {
+  if (!c.history.length) return `<div class="card">${emptyState({ ic: 'history', title: 'Історія порожня' })}</div>`;
+  let lastDay = '', out = '';
+  c.history.forEach(h => {
+    const d = dayLabel(h.at);
+    if (d !== lastDay) { out += `<div class="tl-day">${d}</div>`; lastDay = d; }
+    out += tlItem(h, null);
+  });
+  return `<div class="card"><div class="timeline">${out}</div></div>`;
+}
+
+/* ============ AM Flow — settings ============ */
+
+const SETTINGS_TABS = [
+  { id: 'flow', label: 'Флоу етапів', ic: 'layers' },
+  { id: 'fields', label: 'Поля картки', ic: 'list' },
+  { id: 'vars', label: 'Змінні й вигляд', ic: 'braces' },
+  { id: 'data', label: 'Дані й синхронізація', ic: 'database' },
+];
+
+function viewSettings(tab) {
+  tab = SETTINGS_TABS.some(t => t.id === tab) ? tab : 'flow';
+  const body = tab === 'fields' ? viewSetFields() : tab === 'vars' ? viewSetVars() : tab === 'data' ? viewSetData() : viewSetFlow();
+  return `<div class="page">
+    <div class="page-head"><div><h1 class="page-title">Налаштування</h1><div class="page-sub">Спільні для всіх клієнтів: флоу, поля картки, шаблони й дані</div></div></div>
+    <div class="settings-layout">
+      <nav class="settings-nav">${SETTINGS_TABS.map(t => `<a class="nav-item ${tab === t.id ? 'active' : ''}" href="#/settings/${t.id}">${icon(t.ic, 16)}${t.label}</a>`).join('')}</nav>
+      <div>${body}</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- flow ---------- */
+function viewSetFlow() {
+  const st = S.settings.stages;
+  const nTasks = st.reduce((n, s) => n + s.tasks.length, 0);
+  return `
+    <div class="row wrap" style="align-items:flex-start;margin-bottom:16px">
+      <div style="flex:1;min-width:240px"><h2 class="section-title">Флоу етапів</h2>
+        <p class="section-sub" style="margin:0">${st.length} ${plural(st.length, 'етап', 'етапи', 'етапів')} · ${nTasks} ${plural(nTasks, 'пункт', 'пункти', 'пунктів')}. Зміни одразу діють для всіх клієнтів, позначений прогрес зберігається.</p></div>
+      <button class="btn" data-act="importFlow">${icon('upload', 15)}Імпорт флоу</button>
+      <button class="btn primary" data-act="addStage">${icon('plus', 15)}Етап</button>
+    </div>
+    ${!st.length ? `<div class="card">${emptyState({ ic: 'layers', title: 'Флоу поки порожній', text: 'Імпортуйте готову чернетку з файлу <b>.json</b> або створіть перший етап вручну. Наприклад: «Отримання клієнта і привітання».', actions: `<div class="row" style="justify-content:center"><button class="btn primary" data-act="importFlow">${icon('upload', 16)}Імпортувати з файлу</button><button class="btn" data-act="addStage">${icon('plus', 16)}Створити етап</button></div>` })}</div>` : ''}
+    <div data-sortlist="stages">
+    ${st.map((s, i) => `
+      <div class="card flow-stage" data-sort="stage" data-id="${s.id}">
+        <div class="fs-head">
+          <span class="drag" data-drag title="Перетягніть, щоб змінити порядок">${icon('grip', 16)}</span>
+          <div class="stage-num">${i + 1}</div>
+          <div class="fs-title">
+            <input class="inline-input" data-in="stTitle" data-sid="${s.id}" value="${esc(s.title)}" aria-label="Назва етапу" placeholder="Назва етапу">
+            <input class="inline-input desc" data-in="stDesc" data-sid="${s.id}" value="${esc(s.description)}" placeholder="Короткий опис етапу (необов'язково)" aria-label="Опис етапу">
+          </div>
+          ${s.optional ? '<span class="badge violet" title="Вмикається при створенні клієнта">Необов\'язковий</span>' : ''}
+          <span class="badge">${s.tasks.length}</span>
+          <button class="icon-btn sm" data-act="fsStageMenu" data-sid="${s.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>
+        </div>
+        <div class="fs-tasks" data-sortlist="tasks" data-sid="${s.id}">
+          ${s.tasks.map(t => {
+            const nT = t.attachments.filter(a => a.kind === 'text').length, nF = t.attachments.filter(a => a.kind === 'file').length, nL = t.attachments.filter(a => a.kind === 'link').length;
+            return `<div class="fs-task ${S.ui.settingsTask === t.id ? 'selected' : ''}" data-sort="task" data-id="${t.id}" data-sid="${s.id}" data-act="editTask" data-tid="${t.id}" tabindex="0" role="button">
+              <span class="drag" data-drag title="Перетягніть">${icon('grip', 15)}</span>
+              <span class="tt">${esc(t.title)}</span>
+              <span class="meta">
+                ${nT ? `<span class="it" title="Шаблони повідомлень">${icon('msg', 13)}${nT}</span>` : ''}
+                ${nF ? `<span class="it" title="Файли">${icon('clip', 13)}${nF}</span>` : ''}
+                ${nL ? `<span class="it" title="Посилання">${icon('link', 13)}${nL}</span>` : ''}
+                ${t.dueDays !== null && t.dueDays !== undefined ? `<span class="it" title="Рекомендований термін">${icon('clock', 13)}+${t.dueDays} дн.</span>` : ''}
+              </span>
+              ${icon('chevR', 15)}
+            </div>`; }).join('')}
+        </div>
+        <button class="add-task" data-act="addTask" data-sid="${s.id}">${icon('plus', 15)}Додати пункт</button>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderDrawer() {
+  let wrap = $('#drawer');
+  const found = S.ui.settingsTask && findTask(S.ui.settingsTask);
+  if (!found) { if (wrap) wrap.remove(); return; }
+  const { st, t } = found;
+  const keepScroll = wrap ? $('.drawer-body', wrap).scrollTop : 0;
+  const focusedId = document.activeElement && document.activeElement.id;
+  const html = `
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-t">
+      <div class="drawer-head"><div class="t" id="dr-t">Пункт флоу</div><span class="badge blue" style="max-width:220px;overflow:hidden;text-overflow:ellipsis">${esc(st.title)}</span>
+        <button class="icon-btn" data-act="closeDrawer" aria-label="Закрити">${icon('x', 18)}</button></div>
+      <div class="drawer-body">
+        <div class="field"><label class="label" for="t-title">Назва пункту</label><input class="input" id="t-title" data-in="tTitle" value="${esc(t.title)}"></div>
+        <div class="field"><label class="label" for="t-desc">Інструкція</label><textarea class="textarea" id="t-desc" data-in="tDesc" rows="3" placeholder="Як саме виконати цей крок, на що звернути увагу">${esc(t.description)}</textarea><div class="hint">Видно в картці клієнта, коли розгортаєте пункт.</div></div>
+        <div class="field"><label class="label" for="t-due">Рекомендований термін</label>
+          <div class="row"><input type="number" min="0" max="365" class="input" id="t-due" data-in="tDue" style="width:100px" value="${t.dueDays ?? ''}" placeholder="—"><span class="muted">днів від дати старту клієнта</span></div>
+          <div class="hint">Порожньо — без терміну. 0 — у день старту. У картці клієнта термін можна змінити.</div></div>
+        <div style="border-top:1px solid var(--border);margin:20px 0 16px"></div>
+        <div class="row" style="margin-bottom:4px"><div class="section-title" style="font-size:15px">Матеріали</div></div>
+        <p class="section-sub" style="font-size:13px">Шаблони повідомлень мовами УКР / РУС / ENG, файли й посилання для цього кроку. У картці клієнта поруч буде кнопка «Копіювати».</p>
+        ${t.attachments.map((a, i) => attEditHtml(a, i, t.attachments.length)).join('')}
+        <div class="row wrap">
+          <button class="btn soft sm" data-act="addAtt" data-kind="text">${icon('msg', 14)}Шаблон повідомлення</button>
+          <button class="btn sm" data-act="addAtt" data-kind="file">${icon('clip', 14)}Файл</button>
+          <button class="btn sm" data-act="addAtt" data-kind="link">${icon('link', 14)}Посилання</button>
+        </div>
+        <div style="border-top:1px solid var(--border);margin:24px 0 16px"></div>
+        <button class="btn ghost sm" style="color:var(--danger)" data-act="delTask">${icon('trash', 14)}Видалити пункт з флоу</button>
+      </div>
+      <div class="drawer-foot">${icon('checkCircle', 15)}<span>Зміни зберігаються автоматично</span><span class="sp"></span><button class="btn primary sm" data-act="closeDrawer">Готово</button></div>
+    </aside>`;
+  if (!wrap) {
+    wrap = document.createElement('div'); wrap.id = 'drawer'; wrap.className = 'drawer-wrap';
+    wrap.addEventListener('mousedown', e => { if (e.target === wrap) closeDrawer(); });
+    document.body.appendChild(wrap);
+    wrap.innerHTML = html;
+    setTimeout(() => { const ti = $('#t-title'); if (ti && t.title === 'Новий пункт') { ti.focus(); ti.select(); } }, 40);
+  } else {
+    wrap.innerHTML = html;
+    $('.drawer-body', wrap).scrollTop = keepScroll;
+    if (focusedId) { const el = document.getElementById(focusedId); el && el.focus({ preventScroll: true }); }
+  }
+}
+function closeDrawer() { S.ui.settingsTask = null; const w = $('#drawer'); if (w) w.remove(); render(); }
+
+function attEditHtml(a, i, n) {
+  const ctrls = `
+    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="-1" aria-label="Вище" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp', 14)}</button>
+    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="1" aria-label="Нижче" ${i === n - 1 ? 'disabled' : ''}>${icon('arrowDown', 14)}</button>
+    <button class="icon-btn sm danger" data-act="attDel" data-aid="${a.id}" aria-label="Видалити">${icon('trash', 14)}</button>`;
+  if (a.kind === 'text') {
+    const lang = (S.ui.editLang || {})[a.id] || 'uk';
+    return `<div class="att-edit">
+      <div class="att-edit-head">${icon('msg', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва шаблону" aria-label="Назва шаблону">${ctrls}</div>
+      <div class="att-edit-body">
+        <div class="row" style="margin-bottom:8px">
+          <div class="seg">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="editLang" data-aid="${a.id}" data-lang="${l.id}" title="${l.name}${a.texts[l.id] ? '' : ' — порожньо'}">${l.short}${a.texts[l.id] ? '' : '<span class="mini-dot" style="opacity:.5"></span>'}</button>`).join('')}</div>
+          <span class="sp"></span><span class="muted" style="font-size:12px">${lang === 'uk' ? 'Основна мова' : 'Переклад'}</span>
+        </div>
+        <textarea class="textarea" rows="7" id="att-${a.id}-${lang}" data-in="aText" data-aid="${a.id}" data-lang="${lang}" placeholder="${lang === 'uk' ? 'Текст шаблону українською' : lang === 'ru' ? 'Текст шаблона на русском' : 'Template text in English'}">${esc(a.texts[lang] || '')}</textarea>
+        <div class="var-chips"><span class="lbl">Вставити:</span>${varKeys().map(v => `<button type="button" class="chip-btn" data-act="insVar" data-aid="${a.id}" data-key="${esc(v.key)}" title="${esc(v.label)}">{{${esc(v.key)}}}</button>`).join('')}<a href="#/settings/vars" class="muted" style="font-size:12px;margin-left:4px" data-act="closeDrawerLink">Керувати змінними</a></div>
+      </div></div>`;
+  }
+  if (a.kind === 'file') {
+    return `<div class="att-edit"><div class="att-edit-head">${icon('file', 15)}<div style="flex:1;min-width:0;padding:0 4px"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div><div class="muted" style="font-size:12px">${fmtSize(a.size || 0)}</div></div>
+      <button class="icon-btn sm" data-act="dlFile" data-fid="${a.fileId}" data-name="${esc(a.name)}" aria-label="Завантажити">${icon('download', 14)}</button>${ctrls}</div></div>`;
+  }
+  return `<div class="att-edit"><div class="att-edit-head">${icon('link', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва посилання" aria-label="Назва посилання">${ctrls}</div>
+    <div class="att-edit-body"><input class="input" type="url" data-in="aUrl" data-aid="${a.id}" value="${esc(a.url || '')}" placeholder="https://…" aria-label="Адреса"></div></div>`;
+}
+
+/* ---------- fields ---------- */
+function viewSetFields() {
+  const groups = [...new Set(S.settings.fields.map(f => f.group).filter(Boolean))];
+  return `
+    <div class="row wrap" style="align-items:flex-start;margin-bottom:16px">
+      <div style="flex:1;min-width:240px"><h2 class="section-title">Поля картки клієнта</h2>
+      <p class="section-sub" style="margin:0">Показуються на вкладці «Інфо» в кожного клієнта. Назва, шифр, мова комунікації й дата старту є завжди. Ключ змінної дає змогу підставляти значення поля в шаблони: <span class="code-chip">{{ключ}}</span>.</p></div>
+      <button class="btn primary" data-act="addField">${icon('plus', 15)}Поле</button>
+    </div>
+    <div class="card field-list" style="overflow:hidden">
+      <div class="fl-head"><span></span><span>Назва поля</span><span class="hide-m">Ключ змінної</span><span>Тип</span><span class="hide-m">Група</span><span></span></div>
+      <div data-sortlist="fields">
+      ${S.settings.fields.map(f => `
+        <div data-sort="field" data-id="${f.id}">
+          <div class="fl-item">
+            <span class="drag" data-drag title="Перетягніть">${icon('grip', 15)}</span>
+            <input class="input" data-in="fLabel" data-fid="${f.id}" value="${esc(f.label)}" aria-label="Назва поля">
+            <input class="input hide-m" data-in="fKey" data-fid="${f.id}" value="${esc(f.key)}" placeholder="—" style="font-family:var(--mono)" aria-label="Ключ змінної">
+            <select class="select" data-in="fType" data-fid="${f.id}" aria-label="Тип поля">${FIELD_TYPES.map(t => `<option value="${t.id}" ${f.type === t.id ? 'selected' : ''}>${t.label}</option>`).join('')}</select>
+            <input class="input hide-m" data-in="fGroup" data-fid="${f.id}" value="${esc(f.group)}" list="groups-dl" aria-label="Група">
+            <button class="icon-btn sm danger" data-act="delField" data-fid="${f.id}" aria-label="Видалити поле">${icon('trash', 15)}</button>
+          </div>
+          ${f.type === 'select' ? `<div style="padding:0 12px 10px 40px"><input class="input" data-in="fOpts" data-fid="${f.id}" value="${esc((f.options || []).join(', '))}" placeholder="Варіанти через кому, напр.: A, B+, B, C" aria-label="Варіанти списку"></div>` : ''}
+        </div>`).join('')}
+      </div>
+      ${!S.settings.fields.length ? `<div class="muted" style="padding:16px">Немає полів</div>` : ''}
+    </div>
+    <datalist id="groups-dl">${groups.map(g => `<option value="${esc(g)}">`).join('')}</datalist>`;
+}
+
+/* ---------- vars & appearance ---------- */
+function viewSetVars() {
+  const theme = currentTheme();
+  return `
+    <h2 class="section-title">Змінні для шаблонів</h2>
+    <p class="section-sub">Пишіть у шаблоні <span class="code-chip">{{змінна}}</span>. Коли копіюєте шаблон із картки клієнта, змінна заміниться значенням. Незаповнені змінні підсвічуються жовтим.</p>
+    <div class="card card-pad mb-16">
+      <div class="row" style="margin-bottom:12px"><div class="card-title">Мої змінні</div><span class="sp"></span><button class="btn sm" data-act="addVar">${icon('plus', 14)}Змінна</button></div>
+      <div class="kv-row" style="margin-bottom:4px"><span class="label" style="margin:0">Ключ</span><span class="label" style="margin:0">Значення</span><span></span></div>
+      ${S.settings.vars.map((v, i) => `<div class="kv-row">
+        <input class="input" style="font-family:var(--mono)" data-in="vKey" data-i="${i}" value="${esc(v.key)}" placeholder="напр. ам" aria-label="Ключ">
+        <input class="input" data-in="vVal" data-i="${i}" value="${esc(v.value)}" placeholder="ваше ім’я" aria-label="Значення">
+        <button class="icon-btn sm danger" data-act="delVar" data-i="${i}" aria-label="Видалити">${icon('trash', 15)}</button></div>`).join('') || `<div class="muted">Немає власних змінних</div>`}
+      <div class="hint">Змінна <span class="code-chip">ам</span> — ваше ім'я для шаблонів.</div>
+    </div>
+    <div class="card card-pad mb-16">
+      <div class="card-title" style="margin-bottom:10px">Змінні з картки клієнта</div>
+      <div class="row wrap">${varKeys().filter(v => !S.settings.vars.some(x => x.key === v.key)).map(v => `<span class="badge outline" style="height:26px"><span style="font-family:var(--mono)">{{${esc(v.key)}}}</span><span class="muted" style="font-weight:500">${esc(v.label)}</span></span>`).join('')}</div>
+      <div class="hint">Щоб додати змінну з поля, задайте йому ключ у розділі <a href="#/settings/fields">Поля картки</a>.</div>
+    </div>
+    <div class="card card-pad">
+      <div class="card-title" style="margin-bottom:10px">Вигляд</div>
+      <div class="seg"><button class="${theme === 'light' ? 'on' : ''}" data-act="setTheme" data-v="light">${icon('sun', 14)}Світла</button><button class="${theme === 'dark' ? 'on' : ''}" data-act="setTheme" data-v="dark">${icon('moon', 14)}Темна</button></div>
+    </div>`;
+}
+
+/* ---------- data ---------- */
+function viewSetData() {
+  const cloud = S.store.mode === 'cloud';
+  const pid = cloud && S.ctx ? S.ctx.config.projectId : '';
+  return `
+    <h2 class="section-title">Дані й синхронізація</h2>
+    <p class="section-sub">Де зберігаються дані, резервні копії та перенесення флоу.</p>
+    <div class="card card-pad mb-16">
+      <div class="row" style="align-items:flex-start;gap:14px">
+        <div class="stat-ico" style="width:40px;height:40px;border-radius:11px">${icon(cloud ? 'cloud' : 'drive', 19)}</div>
+        <div style="flex:1">
+          <div class="card-title">${cloud ? 'Хмара Firebase' : 'Локальний режим'}</div>
+          <div class="muted" style="margin-top:2px">${cloud ? `Проєкт <span class="code-chip">${esc(pid)}</span> · ${esc(S.user.email)}. Дані синхронізуються між пристроями й доступні офлайн.` : 'Дані зберігаються лише в цьому браузері. Щоб працювати з кількох пристроїв, підключіть Firebase і перенесіть дані через резервну копію.'}</div>
+        </div>
+        ${cloud ? `<button class="btn" data-act="logout">${icon('logout', 15)}Вийти</button>` : `<button class="btn primary" data-act="switchToCloud">${icon('cloud', 15)}Підключити Firebase</button>`}
+      </div>
+    </div>
+    <div class="grid cols-2 mb-16">
+      <div class="card card-pad">
+        <div class="card-title">Резервна копія</div>
+        <p class="muted" style="margin:4px 0 14px">Усе разом: флоу, поля, клієнти, нотатки, історія. Зберігайте копію раз на тиждень.</p>
+        <label class="row" style="margin-bottom:12px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="bk-files" checked> Разом із файлами</label>
+        <div class="row wrap"><button class="btn primary sm" data-act="exportBackup">${icon('download', 14)}Експортувати</button><button class="btn sm" data-act="importBackup">${icon('upload', 14)}Відновити з копії</button></div>
+      </div>
+      <div class="card card-pad">
+        <div class="card-title">Флоу</div>
+        <p class="muted" style="margin:4px 0 14px">Лише етапи, пункти, шаблони, поля й змінні, без клієнтів. Зручно для чернеток і перенесення.</p>
+        <div class="row wrap" style="margin-top:34px"><button class="btn sm" data-act="exportFlow">${icon('download', 14)}Експортувати флоу</button><button class="btn sm" data-act="importFlow">${icon('upload', 14)}Імпортувати флоу</button></div>
+      </div>
+    </div>
+    ${!cloud ? `<div class="card card-pad"><div class="row"><div style="flex:1"><div class="card-title">Очистити локальні дані</div><div class="muted">Видалить усіх клієнтів, флоу й файли з цього браузера.</div></div><button class="btn sm" style="color:var(--danger)" data-act="wipeLocal">${icon('trash', 14)}Очистити</button></div></div>` : ''}
+    <p class="muted" style="font-size:12px;margin-top:18px">AM Flow ${APP_VERSION}</p>`;
+}
+
+/* ---------- drag & drop reordering ---------- */
+function setupSortables(root) {
+  let drag = null;
+  const clearMarks = () => $$('.drop-before,.drop-after', root).forEach(x => x.classList.remove('drop-before', 'drop-after'));
+  root.addEventListener('mousedown', e => {
+    const h = e.target.closest('[data-drag]'); if (!h) return;
+    const item = h.closest('[data-sort]'); if (item) item.draggable = true;
+  });
+  root.addEventListener('mouseup', () => $$('[data-sort][draggable=true]', root).forEach(x => { if (!drag) x.draggable = false; }));
+  root.addEventListener('dragstart', e => {
+    const item = e.target.closest && e.target.closest('[data-sort]');
+    if (!item || item.draggable !== true) return;
+    drag = { type: item.dataset.sort, id: item.dataset.id, el: item, target: null };
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', item.dataset.id); } catch {}
+    setTimeout(() => item.classList.add('dragging'), 0);
+  });
+  root.addEventListener('dragover', e => {
+    if (!drag) return;
+    clearMarks();
+    const over = e.target.closest(`[data-sort="${drag.type}"]`);
+    if (over && over !== drag.el) {
+      e.preventDefault();
+      const r = over.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+      over.classList.add(after ? 'drop-after' : 'drop-before');
+      drag.target = { id: over.dataset.id, after, sid: over.dataset.sid };
+      return;
+    }
+    if (!over && drag.type === 'task') {
+      const list = e.target.closest('[data-sortlist="tasks"]') || (e.target.closest('.flow-stage') && $('[data-sortlist="tasks"]', e.target.closest('.flow-stage')));
+      if (list) { e.preventDefault(); drag.target = { id: null, after: true, sid: list.dataset.sid }; list.classList.add('drop-after'); return; }
+    }
+    if (over === drag.el) { e.preventDefault(); drag.target = null; }
+  });
+  root.addEventListener('drop', e => {
+    if (!drag) return; e.preventDefault();
+    const d = drag; clearMarks();
+    if (d.target) applyReorder(d);
+  });
+  root.addEventListener('dragend', () => { clearMarks(); if (drag) { drag.el.classList.remove('dragging'); drag.el.draggable = false; } drag = null; });
+}
+function moveInArray(arr, id, targetId, after) {
+  const from = arr.findIndex(x => x.id === id); if (from < 0) return;
+  const [it] = arr.splice(from, 1);
+  let to = targetId ? arr.findIndex(x => x.id === targetId) : arr.length - 1;
+  if (to < 0) to = arr.length - 1;
+  arr.splice(after ? to + 1 : to, 0, it);
+}
+function applyReorder(d) {
+  const t = d.target;
+  updateSettings(s => {
+    if (d.type === 'stage') moveInArray(s.stages, d.id, t.id, t.after);
+    if (d.type === 'field') moveInArray(s.fields, d.id, t.id, t.after);
+    if (d.type === 'task') {
+      const src = s.stages.find(st => st.tasks.some(x => x.id === d.id));
+      const dst = s.stages.find(st => st.id === t.sid);
+      if (!src || !dst) return;
+      const idx = src.tasks.findIndex(x => x.id === d.id);
+      const [task] = src.tasks.splice(idx, 1);
+      let to = t.id ? dst.tasks.findIndex(x => x.id === t.id) : dst.tasks.length;
+      if (to < 0) to = dst.tasks.length;
+      dst.tasks.splice(t.id && t.after ? to + 1 : to, 0, task);
+    }
+  });
+}
+
+/* ============ AM Flow — actions, render, boot ============ */
+
+const curClient = () => { const r = parseRoute(); return r.parts[0] === 'c' ? S.clients.get(r.parts[1]) : null; };
+const taskTitle = (c, tid) => { for (const st of clientStages(c)) { const t = st.tasks.find(x => x.id === tid); if (t) return t.title; } return 'пункт'; };
+function findAtt(aid) {
+  for (const st of S.settings.stages) for (const t of st.tasks) { const a = t.attachments.find(x => x.id === aid); if (a) return { st, t, a }; }
+  return null;
+}
+const PAGE_TITLES = { '': 'Огляд', clients: 'Клієнти', settings: 'Налаштування' };
+
+/* ---------- render ---------- */
+let lastPath = null;
+function render() {
+  const main = $('#main');
+  if (!S.settings || !main) return;
+  const r = parseRoute();
+  const act = document.activeElement;
+  const focus = act && act.id && (main.contains(act)) ? { id: act.id, s: act.selectionStart, e: act.selectionEnd } : null;
+  let html, title = PAGE_TITLES[r.parts[0] || ''] || '';
+  if (r.parts[0] === 'c') {
+    const c = S.clients.get(r.parts[1]);
+    if (!c) html = `<div class="page"><div class="card">${emptyState({ ic: 'search', title: 'Клієнта не знайдено', text: 'Можливо, його видалили на іншому пристрої.', actions: `<a class="btn primary" href="#/clients">До списку клієнтів</a>` })}</div></div>`;
+    else {
+      if (r.q.task) {
+        const st = clientStages(c).find(s => s.tasks.some(t => t.id === r.q.task));
+        if (st) { S.ui.open[c.id] = S.ui.open[c.id] || {}; S.ui.open[c.id][st.id] = true; S.ui.openTask = r.q.task; S.ui.scrollTo = 'task-' + r.q.task; }
+        history.replaceState(null, '', `#/c/${c.id}`);
+      }
+      html = viewClient(c, r.parts[2] || 'process', r.q);
+      title = c.name;
+    }
+  } else if (r.parts[0] === 'clients') html = viewClients();
+  else if (r.parts[0] === 'settings') html = viewSettings(r.parts[1]);
+  else html = viewDashboard();
+  main.innerHTML = html;
+  renderSidebar(r);
+  document.title = (title ? title + ' · ' : '') + 'AM Flow';
+  if (focus) {
+    const el = document.getElementById(focus.id);
+    if (el) { el.focus({ preventScroll: true }); try { if (focus.s != null) el.setSelectionRange(focus.s, focus.e); } catch {} }
+  }
+  $$('.inline-input.auto', main).forEach(autosize);
+  if (S.ui.scrollTo) {
+    const el = document.getElementById(S.ui.scrollTo); S.ui.scrollTo = null;
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+  }
+  if (S.ui.settingsTask && r.parts[0] === 'settings') renderDrawer(); else if ($('#drawer')) { S.ui.settingsTask = null; $('#drawer').remove(); }
+}
+function autosize(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('.inline-input.auto')) autosize(e.target); });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('textarea[data-single]')) { e.preventDefault(); e.target.blur(); } });
+window.addEventListener('resize', debounce(() => $$('.inline-input.auto').forEach(autosize), 150));
+function softRender() {
+  const a = document.activeElement;
+  if (a && a.matches && a.matches('input:not([type=checkbox]),textarea') ) { S.pendingRender = true; return; }
+  render();
+}
+document.addEventListener('focusout', () => setTimeout(() => {
+  const a = document.activeElement;
+  if (S.pendingRender && !(a && a.matches && a.matches('input,textarea'))) { S.pendingRender = false; render(); }
+}, 0));
+function updateSyncEl() {
+  const el = $('.sync'); if (!el) return;
+  const labels = { synced: 'Синхронізовано', saving: 'Зберігаю…', offline: 'Офлайн · зміни збережено локально', error: 'Помилка синхронізації', local: 'Дані лише в цьому браузері' };
+  el.className = 'sync ' + (S.sync === 'local' ? 'offline' : S.sync);
+  el.title = labels[S.sync] || ''; el.lastElementChild.textContent = labels[S.sync] || '';
+}
+function onRemote(ev) {
+  if (ev.type === 'settings') {
+    if ((ev.data.updatedAt || 0) <= (S.settings.updatedAt || 0)) return;
+    S.settings = normalizeSettings(clone(ev.data));
+  } else if (ev.type === 'client') {
+    const local = S.clients.get(ev.data.id);
+    if (local && (clientTimers.has(local.id) || (ev.data.updatedAt || 0) <= (local.updatedAt || 0))) return;
+    S.clients.set(ev.data.id, normalizeClient(clone(ev.data)));
+  } else if (ev.type === 'clientRemoved') {
+    if (!S.clients.has(ev.id)) return;
+    S.clients.delete(ev.id);
+  }
+  if (S.ui.settingsTask && $('#drawer') && document.activeElement && $('#drawer').contains(document.activeElement)) return;
+  softRender();
+}
+
+window.addEventListener('hashchange', () => {
+  closeMenu(); $('#app') && $('#app').classList.remove('nav-open');
+  const path = location.hash.split('?')[0];
+  if (path !== lastPath) {
+    const [a, b] = [path.split('/')[1], lastPath ? lastPath.split('/')[1] : null];
+    if (!(a === 'c' && b === 'c' && path.split('/')[2] === lastPath.split('/')[2])) { S.ui.openTask = null; window.scrollTo(0, 0); }
+    lastPath = path;
+  }
+  render();
+});
+
+/* ---------- client modals ---------- */
+function clientFormBody(c) {
+  const d = c || { name: '', code: '', lang: 'uk', status: 'onboarding', startDate: todayISO(), color: PALETTE[0] };
+  const optStages = S.settings.stages.filter(s => s.optional);
+  return `
+    <div class="field"><label class="label" for="cf-name">Назва клієнта</label><input class="input" id="cf-name" name="name" value="${esc(d.name)}" placeholder="Назва компанії клієнта" autocomplete="off"></div>
+    <div class="field-row">
+      <div class="field"><label class="label" for="cf-code">Шифр проєкту</label><input class="input" id="cf-code" name="code" value="${esc(d.code)}" placeholder="Напр. ABC" style="font-family:var(--mono);text-transform:uppercase" autocomplete="off"></div>
+      <div class="field"><label class="label" for="cf-start">Дата старту</label><input type="date" class="input" id="cf-start" name="startDate" value="${esc(d.startDate)}"></div>
+    </div>
+    <div class="field"><span class="label">Мова комунікації</span>
+      <div class="seg" data-name="lang">${LANGS.map(l => `<button type="button" class="${d.lang === l.id ? 'on' : ''}" data-v="${l.id}">${l.name}</button>`).join('')}</div>
+      <div class="hint">Шаблони повідомлень у картці відкриватимуться цією мовою. Від дати старту рахуються рекомендовані терміни.</div></div>
+    <div class="field-row">
+      <div class="field"><label class="label" for="cf-status">Статус</label><select class="select" id="cf-status" name="status">${STATUSES.map(s => `<option value="${s.id}" ${d.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
+      <div class="field"><span class="label">Колір</span><div class="seg" data-name="color" style="padding:4px;gap:4px">${PALETTE.map(col => `<button type="button" class="${d.color === col ? 'on' : ''}" data-v="${col}" aria-label="Колір ${col}" style="padding:3px"><span style="display:block;width:16px;height:16px;border-radius:5px;background:${col}"></span></button>`).join('')}</div></div>
+    </div>
+    ${!c && optStages.length ? `<div class="field"><span class="label">Необов'язкові етапи</span>
+      ${optStages.map(s => `<label class="row" style="padding:5px 0;cursor:pointer;font-size:13.5px;align-items:flex-start"><input type="checkbox" name="opt_${s.id}" style="margin-top:3px"><span><b style="font-weight:600">${esc(s.title)}</b>${s.description ? `<br><span class="muted" style="font-size:12.5px">${esc(s.description)}</span>` : ''}</span></label>`).join('')}
+      <div class="hint">Не позначені етапи буде пропущено. Повернути їх можна в картці клієнта: ⋯ біля етапу → «Повернути пропущені».</div></div>` : ''}`;
+}
+const requireName = (data, wrap) => {
+  if (data.name && data.name.trim()) return false;
+  const i = $('[name=name]', wrap); i.style.borderColor = 'var(--danger)'; i.focus(); i.placeholder = 'Вкажіть назву клієнта'; return true;
+};
+
+/* ---------- actions ---------- */
+const ACTIONS = {
+  openNav: () => $('#app').classList.add('nav-open'),
+  closeNav: () => $('#app').classList.remove('nav-open'),
+  toggleTheme: () => { applyTheme(currentTheme() === 'dark' ? 'light' : 'dark'); render(); },
+  setTheme: el => { applyTheme(el.dataset.v); render(); },
+  logout: () => logout(),
+  openClient: el => go(`#/c/${el.dataset.id}`),
+  filter: el => { S.ui.filter = el.dataset.v; saveUi(); render(); },
+
+  async newClient() {
+    const data = await openModal({
+      title: 'Новий клієнт', body: clientFormBody(null),
+      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Створити клієнта', cls: 'primary', value: 'form', validate: requireName }],
+    });
+    if (!data) return;
+    const c = newClient(data);
+    S.settings.stages.filter(s => s.optional && !data['opt_' + s.id]).forEach(s => s.tasks.forEach(t => { c.progress[t.id] = { skipped: true }; }));
+    S.clients.set(c.id, c); S.store.saveClient(clone(c));
+    toast(`Клієнта «${c.name}» створено`);
+    go(`#/c/${c.id}`);
+  },
+  async editClient() {
+    const c = curClient(); if (!c) return;
+    const data = await openModal({
+      title: 'Редагувати клієнта', body: clientFormBody(c),
+      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form', validate: requireName }],
+    });
+    if (!data) return;
+    const prevStatus = c.status;
+    updateClient(c.id, x => {
+      x.name = data.name.trim(); x.code = (data.code || '').trim().toUpperCase(); x.lang = data.lang || x.lang;
+      x.startDate = data.startDate || x.startDate; x.status = data.status; if (data.color) x.color = data.color;
+    }, { log: prevStatus !== data.status ? { type: 'status', text: `Статус: ${statusOf(prevStatus).label} → ${statusOf(data.status).label}` } : null });
+    toast('Зміни збережено');
+  },
+  clientMenu(el) {
+    const c = curClient(); if (!c) return;
+    showMenu(el, [
+      { label: 'Редагувати', icon: 'edit', fn: ACTIONS.editClient },
+      { label: 'Копіювати шифр', icon: 'copy', fn: async () => { await copyText(c.code || c.name); toast('Скопійовано'); } },
+      '-',
+      { label: 'Видалити клієнта', icon: 'trash', danger: true, fn: async () => {
+        const ok = await confirmDialog({ title: `Видалити клієнта «${c.name}»?`, text: 'Буде видалено картку, прогрес, нотатки, історію й файли клієнта. Цю дію не можна скасувати. Якщо співпраця просто завершилась, краще змініть статус на «Завершено».', confirm: 'Видалити назавжди' });
+        if (!ok) return;
+        c.files.forEach(f => S.store.deleteFile(f.id));
+        S.clients.delete(c.id); S.store.deleteClient(c.id);
+        toast(`Клієнта «${c.name}» видалено`); go('#/clients');
+      } },
+    ]);
+  },
+
+  toggleStage(el) {
+    const c = curClient(); if (!c) return;
+    const pr = progressOf(c); const st = pr.stages.find(s => s.id === el.dataset.sid); if (!st) return;
+    S.ui.open[c.id] = S.ui.open[c.id] || {};
+    S.ui.open[c.id][st.id] = !stageIsOpen(c, st, pr);
+    render();
+  },
+  jumpStage(el) {
+    const c = curClient(); if (!c) return;
+    S.ui.open[c.id] = S.ui.open[c.id] || {}; S.ui.open[c.id][el.dataset.sid] = true;
+    S.ui.scrollTo = 'stage-' + el.dataset.sid; render();
+  },
+  toggleTask(el) { S.ui.openTask = S.ui.openTask === el.dataset.tid ? null : el.dataset.tid; render(); },
+
+  async toggleDone(el) {
+    const c = curClient(); if (!c) return;
+    const tid = el.dataset.tid, p = taskState(c, tid), title = taskTitle(c, tid);
+    if (p.skipped) return;
+    const statsOf = () => progressOf(c).stats.find(s => s.stage.tasks.some(t => t.id === tid));
+    if (p.done) {
+      const ok = await confirmDialog({ title: 'Зняти позначку «Виконано»?', text: `Пункт «${esc(title)}» знову стане невиконаним${p.doneAt ? `, дату виконання (${fmtTs(p.doneAt)}) буде видалено` : ''}.`, confirm: 'Зняти позначку', tone: 'amber', ic: 'undo' });
+      if (!ok) return;
+      updateClient(c.id, x => { const q = x.progress[tid] || (x.progress[tid] = {}); q.done = false; delete q.doneAt; }, { log: { type: 'undone', text: `Знято позначку: «${title}»` } });
+      return;
+    }
+    const before = statsOf();
+    updateClient(c.id, x => { const q = x.progress[tid] || (x.progress[tid] = {}); q.done = true; q.doneAt = Date.now(); }, { log: { type: 'done', text: `Виконано: «${title}»` }, render: false });
+    const after = statsOf();
+    if (before && after && !before.complete && after.complete) {
+      logTo(c, 'stage', `Етап «${after.stage.title}» завершено`);
+      toast(`Етап «${after.stage.title}» завершено 🎉`);
+    }
+    render();
+  },
+  taskMenu(el) {
+    const c = curClient(); if (!c) return;
+    const tid = el.dataset.tid, p = taskState(c, tid), title = taskTitle(c, tid);
+    const custom = c.customTasks.find(t => t.id === tid);
+    showMenu(el, [
+      p.skipped
+        ? { label: 'Повернути пункт', icon: 'undo', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: false }; }, { log: { type: 'unskip', text: `Повернуто пункт: «${title}»` } }) }
+        : { label: 'Не потрібно для цього клієнта', icon: 'ban', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: true, done: false }; delete x.progress[tid].doneAt; }, { log: { type: 'skip', text: `Не потрібно: «${title}»` } }) },
+      custom ? { label: 'Редагувати пункт', icon: 'edit', fn: () => editCustomTask(c, custom) } : { label: 'Редагувати у флоу', icon: 'sliders', fn: () => { S.ui.settingsTask = tid; go('#/settings/flow'); } },
+      custom ? '-' : null,
+      custom ? { label: 'Видалити пункт', icon: 'trash', danger: true, fn: async () => {
+        if (!await confirmDialog({ title: 'Видалити пункт?', text: `«${esc(custom.title)}» буде видалено з картки цього клієнта.`, confirm: 'Видалити' })) return;
+        updateClient(c.id, x => { x.customTasks = x.customTasks.filter(t => t.id !== tid); delete x.progress[tid]; }, { log: { type: 'customDel', text: `Видалено пункт «${custom.title}»` } });
+      } } : null,
+    ]);
+  },
+  stageMenu(el) {
+    const c = curClient(); if (!c) return;
+    const st = clientStages(c).find(s => s.id === el.dataset.sid); if (!st) return;
+    const open = st.tasks.filter(t => { const p = taskState(c, t.id); return !p.done && !p.skipped; });
+    const skipped = st.tasks.filter(t => taskState(c, t.id).skipped);
+    showMenu(el, [
+      open.length ? { label: 'Позначити все виконаним', icon: 'checkCircle', fn: async () => {
+        if (!await confirmDialog({ title: 'Позначити весь етап виконаним?', text: `${open.length} ${plural(open.length, 'пункт', 'пункти', 'пунктів')} етапу «${esc(st.title)}» буде позначено виконаними сьогоднішньою датою. Зручно для клієнтів, які вже давно в роботі.`, confirm: 'Позначити', tone: 'primary', ic: 'checkCircle' })) return;
+        updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), done: true, doneAt: Date.now() }; }); }, { log: { type: 'stage', text: `Етап «${st.title}» позначено виконаним` } });
+      } } : null,
+      open.length ? { label: 'Пропустити етап для клієнта', icon: 'ban', fn: async () => {
+        if (!await confirmDialog({ title: 'Пропустити етап?', text: `${open.length} ${plural(open.length, 'невиконаний пункт', 'невиконані пункти', 'невиконаних пунктів')} етапу «${esc(st.title)}» буде позначено як «Не потрібно» і не враховуватиметься в прогресі.`, confirm: 'Пропустити', tone: 'amber', ic: 'ban' })) return;
+        updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: true }; }); }, { log: { type: 'skip', text: `Етап «${st.title}» пропущено` } });
+      } } : null,
+      skipped.length ? { label: `Повернути пропущені (${skipped.length})`, icon: 'undo', fn: () => updateClient(c.id, x => { skipped.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: false }; }); }, { log: { type: 'unskip', text: `Повернуто пропущені пункти етапу «${st.title}»` } }) } : null,
+      { label: 'Додати пункт для клієнта', icon: 'plus', fn: () => ACTIONS.addCustomTask({ dataset: { sid: st.id } }) },
+      '-',
+      { label: 'Редагувати етап у флоу', icon: 'sliders', fn: () => go('#/settings/flow') },
+    ]);
+  },
+  async addCustomTask(el) {
+    const c = curClient(); if (!c) return;
+    const st = S.settings.stages.find(s => s.id === el.dataset.sid);
+    const data = await openModal({
+      title: 'Пункт лише для цього клієнта', text: st ? `Етап «${esc(st.title)}». У флоу й в інших клієнтів він не з'явиться.` : '',
+      body: `<div class="field"><label class="label" for="ct-t">Назва пункту</label><input class="input" id="ct-t" name="title" placeholder="Що потрібно зробити"></div>
+             <div class="field"><label class="label" for="ct-d">Опис</label><textarea class="textarea" id="ct-d" name="description" rows="3" placeholder="Необов'язково"></textarea></div>`,
+      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Додати', cls: 'primary', value: 'form', validate: (d, w) => { if (d.title.trim()) return false; $('[name=title]', w).focus(); return true; } }],
+    });
+    if (!data) return;
+    const t = { id: uid('ct_'), stageId: el.dataset.sid, title: data.title.trim(), description: data.description.trim() };
+    updateClient(c.id, x => x.customTasks.push(t), { log: { type: 'custom', text: `Додано пункт «${t.title}»` } });
+  },
+
+  attLang(el) { S.ui.attLang = S.ui.attLang || {}; S.ui.attLang[el.dataset.aid] = el.dataset.lang; render(); },
+  async copyAtt(el) {
+    const f = findAtt(el.dataset.aid); if (!f) return;
+    const c = curClient();
+    const raw = f.a.texts[el.dataset.lang] || '';
+    const { text, missing } = c ? fillText(raw, c) : { text: raw, missing: [] };
+    if (!await copyText(text)) return toast('Не вдалося скопіювати', { error: true });
+    toast(missing.length ? `Скопійовано. Не заповнено: ${missing.map(k => '{{' + k + '}}').join(', ')}` : `Скопійовано (${langOf(el.dataset.lang).short})`);
+  },
+  async copyLink(el) { await copyText(el.dataset.url); toast('Посилання скопійовано'); },
+  async dlFile(el) {
+    try { toast('Завантажую файл…', { ms: 1500 }); const blob = await S.store.downloadFile(el.dataset.fid); downloadBlob(blob, el.dataset.name || 'file'); }
+    catch (e) { toast('Не вдалося завантажити файл: ' + e.message, { error: true }); }
+  },
+  resetDue(el) {
+    const c = curClient(); if (!c) return;
+    const tid = el.dataset.tid, title = taskTitle(c, tid);
+    updateClient(c.id, x => { if (x.progress[tid]) delete x.progress[tid].due; }, { log: { type: 'due', text: `Термін «${title}» повернуто до рекомендованого` } });
+  },
+
+  addNote() {
+    const c = curClient(); const ta = $('#note-new'); if (!c || !ta) return;
+    const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+    updateClient(c.id, x => x.notes.push({ id: uid('n_'), text, createdAt: Date.now() }), { log: { type: 'note', text: 'Додано нотатку' } });
+    toast('Нотатку додано');
+  },
+  async editNote(el) {
+    const c = curClient(); const n = c && c.notes.find(x => x.id === el.dataset.nid); if (!n) return;
+    const data = await openModal({ title: 'Редагувати нотатку', wide: true, body: `<textarea class="textarea" name="text" rows="8">${esc(n.text)}</textarea>`, actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form' }] });
+    if (!data || !data.text.trim()) return;
+    updateClient(c.id, x => { const m = x.notes.find(y => y.id === n.id); m.text = data.text.trim(); m.updatedAt = Date.now(); });
+  },
+  delNote(el) {
+    const c = curClient(); if (!c) return;
+    const idx = c.notes.findIndex(x => x.id === el.dataset.nid); if (idx < 0) return;
+    const removed = c.notes[idx];
+    updateClient(c.id, x => x.notes.splice(idx, 1));
+    toast('Нотатку видалено', { action: { label: 'Повернути', fn: () => updateClient(c.id, x => x.notes.push(removed)) } });
+  },
+  async uploadClientFile() { const files = await pickFile('', true); if (files && files.length) uploadClientFiles(files); },
+  async delClientFile(el) {
+    const c = curClient(); const f = c && c.files.find(x => x.id === el.dataset.fid); if (!f) return;
+    if (!await confirmDialog({ title: 'Видалити файл?', text: `«${esc(f.name)}» буде видалено без можливості відновлення.`, confirm: 'Видалити' })) return;
+    S.store.deleteFile(f.id);
+    updateClient(c.id, x => { x.files = x.files.filter(y => y.id !== f.id); }, { log: { type: 'fileDel', text: `Видалено файл «${f.name}»` } });
+  },
+
+  /* settings: flow */
+  addStage() {
+    const id = uid('s_');
+    updateSettings(s => s.stages.push({ id, title: 'Новий етап', description: '', tasks: [] }));
+    const inp = $(`[data-in=stTitle][data-sid="${id}"]`); if (inp) { inp.scrollIntoView({ block: 'center' }); inp.focus(); inp.select(); }
+  },
+  fsStageMenu(el) {
+    const sid = el.dataset.sid, idx = S.settings.stages.findIndex(s => s.id === sid), st = S.settings.stages[idx];
+    showMenu(el, [
+      { label: 'Додати пункт', icon: 'plus', fn: () => ACTIONS.addTask({ dataset: { sid } }) },
+      { label: st.optional ? 'Зробити обов\'язковим' : 'Зробити необов\'язковим', icon: 'ban', fn: () => { const was = st.optional; updateSettings(s => { s.stages.find(x => x.id === sid).optional = !was; }); toast(was ? 'Етап тепер обов\'язковий' : 'Етап необов\'язковий: вмикається галочкою при створенні клієнта'); } },
+      idx > 0 ? { label: 'Перемістити вище', icon: 'arrowUp', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx - 1, 0, x); }) } : null,
+      idx < S.settings.stages.length - 1 ? { label: 'Перемістити нижче', icon: 'arrowDown', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx + 1, 0, x); }) } : null,
+      '-',
+      { label: 'Видалити етап', icon: 'trash', danger: true, fn: async () => {
+        const ids = new Set(st.tasks.map(t => t.id));
+        const touched = [...S.clients.values()].filter(c => Object.keys(c.progress).some(k => ids.has(k) && (c.progress[k].done || c.progress[k].skipped))).length;
+        if (!await confirmDialog({ title: `Видалити етап «${st.title}»?`, text: `Етап і ${st.tasks.length} ${plural(st.tasks.length, 'пункт', 'пункти', 'пунктів')} з матеріалами зникнуть у всіх клієнтів${touched ? `. У ${touched} ${plural(touched, 'клієнта', 'клієнтів', 'клієнтів')} тут уже є позначки` : ''}.`, confirm: 'Видалити етап' })) return;
+        st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && S.store.deleteFile(a.fileId)));
+        updateSettings(s => { s.stages = s.stages.filter(x => x.id !== sid); });
+        toast('Етап видалено');
+      } },
+    ]);
+  },
+  addTask(el) {
+    const id = uid('t_');
+    updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); st && st.tasks.push({ id, title: 'Новий пункт', description: '', dueDays: null, attachments: [] }); }, { render: false });
+    S.ui.settingsTask = id; render();
+  },
+  editTask(el, e) {
+    if (e && e.target.closest('[data-drag]')) return;
+    S.ui.settingsTask = el.dataset.tid; render();
+  },
+  closeDrawer: () => closeDrawer(),
+  closeDrawerLink: () => { S.ui.settingsTask = null; const w = $('#drawer'); w && w.remove(); },
+  async addAtt(el) {
+    const f = findTask(S.ui.settingsTask); if (!f) return;
+    const kind = el.dataset.kind;
+    if (kind === 'text') {
+      const id = uid('a_');
+      updateSettings(() => f.t.attachments.push({ id, kind: 'text', title: 'Новий шаблон', texts: { uk: '', ru: '', en: '' } }), { render: false });
+      renderDrawer();
+      const inp = $(`#drawer [data-in=aTitle][data-aid="${id}"]`); if (inp) { inp.scrollIntoView({ block: 'center' }); inp.focus(); inp.select(); }
+    } else if (kind === 'link') {
+      const id = uid('a_');
+      updateSettings(() => f.t.attachments.push({ id, kind: 'link', title: '', url: '' }), { render: false });
+      renderDrawer();
+      const inp = $(`#drawer [data-in=aTitle][data-aid="${id}"]`); inp && inp.focus();
+    } else {
+      const file = await pickFile(); if (!file) return;
+      if (file.size > MAX_FILE) return toast(`Файл завеликий: максимум ${fmtSize(MAX_FILE)}`, { error: true });
+      try {
+        toast(`Завантажую «${file.name}»…`, { ms: 2000 });
+        const meta = await S.store.uploadFile(file, file.name, file.type);
+        updateSettings(() => f.t.attachments.push({ id: uid('a_'), kind: 'file', fileId: meta.id, name: meta.name, size: meta.size, type: meta.type }), { render: false });
+        renderDrawer(); toast('Файл додано');
+      } catch (e) { toast('Не вдалося завантажити: ' + e.message, { error: true }); }
+    }
+  },
+  attMove(el) {
+    const f = findTask(S.ui.settingsTask); if (!f) return;
+    const arr = f.t.attachments, i = arr.findIndex(a => a.id === el.dataset.aid), j = i + Number(el.dataset.dir);
+    if (i < 0 || j < 0 || j >= arr.length) return;
+    updateSettings(() => { const [x] = arr.splice(i, 1); arr.splice(j, 0, x); }, { render: false });
+    renderDrawer();
+  },
+  async attDel(el) {
+    const f = findTask(S.ui.settingsTask); if (!f) return;
+    const a = f.t.attachments.find(x => x.id === el.dataset.aid); if (!a) return;
+    const hasContent = a.kind === 'file' || (a.kind === 'text' && Object.values(a.texts).some(Boolean));
+    if (hasContent && !await confirmDialog({ title: a.kind === 'file' ? 'Видалити файл?' : 'Видалити шаблон?', text: `«${esc(a.title || a.name)}» зникне з цього пункту в усіх клієнтів.`, confirm: 'Видалити' })) return;
+    if (a.kind === 'file') S.store.deleteFile(a.fileId);
+    updateSettings(() => { f.t.attachments = f.t.attachments.filter(x => x.id !== a.id); }, { render: false });
+    renderDrawer();
+  },
+  editLang(el) {
+    S.ui.editLang = S.ui.editLang || {}; S.ui.editLang[el.dataset.aid] = el.dataset.lang;
+    renderDrawer();
+    const ta = $(`#att-${el.dataset.aid}-${el.dataset.lang}`); ta && ta.focus();
+  },
+  insVar(el) {
+    const ta = $(`#drawer textarea[data-in=aText][data-aid="${el.dataset.aid}"]`); if (!ta) return;
+    const ins = `{{${el.dataset.key}}}`, s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? s;
+    ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
+    ta.focus(); ta.setSelectionRange(s + ins.length, s + ins.length);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  },
+  async delTask() {
+    const f = findTask(S.ui.settingsTask); if (!f) return;
+    const touched = [...S.clients.values()].filter(c => c.progress[f.t.id] && (c.progress[f.t.id].done || c.progress[f.t.id].skipped)).length;
+    if (!await confirmDialog({ title: `Видалити пункт «${f.t.title}»?`, text: `Пункт і його матеріали зникнуть у всіх клієнтів${touched ? `; у ${touched} ${plural(touched, 'клієнта', 'клієнтів', 'клієнтів')} він уже позначений` : ''}.`, confirm: 'Видалити пункт' })) return;
+    f.t.attachments.forEach(a => a.kind === 'file' && S.store.deleteFile(a.fileId));
+    updateSettings(() => { f.st.tasks = f.st.tasks.filter(t => t.id !== f.t.id); }, { render: false });
+    closeDrawer(); toast('Пункт видалено');
+  },
+
+  /* settings: fields & vars */
+  addField() {
+    const id = uid('f_'), last = S.settings.fields[S.settings.fields.length - 1];
+    updateSettings(s => s.fields.push({ id, label: 'Нове поле', key: '', type: 'text', group: last ? last.group : 'Основне' }));
+    const inp = $(`[data-in=fLabel][data-fid="${id}"]`); if (inp) { inp.focus(); inp.select(); }
+  },
+  async delField(el) {
+    const f = S.settings.fields.find(x => x.id === el.dataset.fid); if (!f) return;
+    const used = [...S.clients.values()].filter(c => c.fields[f.id]).length;
+    if (used && !await confirmDialog({ title: `Видалити поле «${f.label}»?`, text: `Поле заповнене у ${used} ${plural(used, 'клієнта', 'клієнтів', 'клієнтів')}. Значення зникнуть із карток.`, confirm: 'Видалити поле' })) return;
+    updateSettings(s => { s.fields = s.fields.filter(x => x.id !== f.id); });
+  },
+  addVar() { updateSettings(s => s.vars.push({ key: '', value: '' })); const ins = $$('[data-in=vKey]'); ins.length && ins[ins.length - 1].focus(); },
+  delVar(el) { updateSettings(s => s.vars.splice(+el.dataset.i, 1)); },
+
+  /* data */
+  exportBackup: () => exportBackup($('#bk-files') ? $('#bk-files').checked : true),
+  importBackup: () => importFromFile('backup'),
+  exportFlow: () => exportFlow(),
+  importFlow: () => importFromFile('flow'),
+  async wipeLocal() {
+    if (!await confirmDialog({ title: 'Очистити всі локальні дані?', text: 'Буде видалено всіх клієнтів, флоу, нотатки й файли з цього браузера. Перед цим варто експортувати резервну копію.', confirm: 'Очистити' })) return;
+    await S.store.wipe(); location.hash = ''; location.reload();
+  },
+  async switchToCloud() {
+    const ok = await confirmDialog({ title: 'Перейти на Firebase?', text: 'Спершу експортуйте резервну копію (Дані → Експортувати). Після входу в Firebase відновіть її, і всі клієнти перенесуться в хмару. Локальні дані залишаться в цьому браузері.', confirm: 'Продовжити', tone: 'primary', ic: 'cloud' });
+    if (!ok) return;
+    showCloudSetup(true);
+  },
+};
+
+const INPUTS = {
+  search: el => { S.ui.q = el.value; render(); },
+  cfield: el => { const c = curClient(); c && updateClient(c.id, x => { x.fields[el.dataset.fid] = el.value; }, { render: false }); },
+  cname: el => { const c = curClient(); if (!c) return; updateClient(c.id, x => { x.name = el.value; }, { render: false }); const h = $('.client-head h1'); if (h && h.firstChild) h.firstChild.textContent = el.value + ' '; renderSidebar(parseRoute()); },
+  ccode: el => { const c = curClient(); c && updateClient(c.id, x => { x.code = el.value.toUpperCase(); }, { render: false }); },
+  taskNote: el => { const c = curClient(); c && updateClient(c.id, x => { x.progress[el.dataset.tid] = { ...(x.progress[el.dataset.tid] || {}), note: el.value }; }, { render: false }); },
+  stTitle: el => updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); if (st) st.title = el.value; }, { render: false }),
+  stDesc: el => updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); if (st) st.description = el.value; }, { render: false }),
+  tTitle: el => { const f = findTask(S.ui.settingsTask); if (!f) return; updateSettings(() => { f.t.title = el.value; }, { render: false }); const row = $(`.fs-task[data-id="${f.t.id}"] .tt`); if (row) row.textContent = el.value; },
+  tDesc: el => { const f = findTask(S.ui.settingsTask); f && updateSettings(() => { f.t.description = el.value; }, { render: false }); },
+  tDue: el => { const f = findTask(S.ui.settingsTask); f && updateSettings(() => { const v = el.value.trim(); f.t.dueDays = v === '' ? null : Math.max(0, Math.min(365, parseInt(v, 10) || 0)); }, { render: false }); },
+  aTitle: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.title = el.value; }, { render: false }); },
+  aText: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.texts[el.dataset.lang] = el.value; }, { render: false }); },
+  aUrl: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.url = el.value.trim(); }, { render: false }); },
+  fLabel: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.label = el.value; }, { render: false }),
+  fKey: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.key = slugKey(el.value); }, { render: false }),
+  fGroup: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.group = el.value.trim() || 'Основне'; }, { render: false }),
+  fOpts: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.options = el.value.split(',').map(x => x.trim()).filter(Boolean); }, { render: false }),
+  vKey: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.key = slugKey(el.value); }, { render: false }),
+  vVal: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.value = el.value; }, { render: false }),
+};
+const CHANGES = {
+  sort: el => { S.ui.sort = el.value; saveUi(); render(); },
+  cfield: el => {
+    const c = curClient(); if (!c) return;
+    const f = S.settings.fields.find(x => x.id === el.dataset.fid); const prev = el.dataset.prev || '', val = el.value;
+    if (prev === val) return;
+    el.dataset.prev = val;
+    const short = s => s.length > 40 ? s.slice(0, 40) + '…' : s;
+    updateClient(c.id, x => { x.fields[el.dataset.fid] = val; }, { render: el.tagName === 'SELECT' || el.type === 'date' || el.type === 'url', log: { type: 'field', text: `«${f ? f.label : 'Поле'}»: ${prev && prev.length < 40 && val.length < 40 ? `${short(prev)} → ${short(val) || '—'}` : val ? short(val) : 'очищено'}` } });
+  },
+  cname: el => { const c = curClient(); if (!c) return; const v = el.value.trim() || el.dataset.prev; if (v === el.dataset.prev) return; el.dataset.prev = v; updateClient(c.id, x => { x.name = v; }, { render: false, log: { type: 'field', text: `Назва: ${v}` } }); },
+  ccode: el => { const c = curClient(); if (!c) return; const v = el.value.trim().toUpperCase(); if (v === el.dataset.prev) return; el.dataset.prev = v; updateClient(c.id, x => { x.code = v; }, { render: false, log: { type: 'field', text: `Шифр: ${v || '—'}` } }); },
+  clang: el => { const c = curClient(); c && updateClient(c.id, x => { x.lang = el.value; }, { log: { type: 'field', text: `Мова комунікації: ${langOf(el.value).name}` } }); },
+  cstart: el => { const c = curClient(); c && el.value && updateClient(c.id, x => { x.startDate = el.value; }, { log: { type: 'field', text: `Дата старту: ${fmtDate(el.value)}` } }); },
+  cstatus: el => { const c = curClient(); if (!c) return; const prev = c.status; updateClient(c.id, x => { x.status = el.value; }, { log: { type: 'status', text: `Статус: ${statusOf(prev).label} → ${statusOf(el.value).label}` } }); },
+  taskDue: el => {
+    const c = curClient(); if (!c) return; const tid = el.dataset.tid, title = taskTitle(c, tid);
+    updateClient(c.id, x => { const q = x.progress[tid] = { ...(x.progress[tid] || {}) }; if (el.value) q.due = el.value; else delete q.due; },
+      { log: { type: 'due', text: el.value ? `Термін «${title}»: ${fmtDate(el.value)}` : `Термін «${title}» прибрано` } });
+  },
+  fType: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) { f.type = el.value; if (f.type === 'select' && !f.options) f.options = []; } }),
+  tDue: () => { const row = S.ui.settingsTask; row && render(); },
+};
+
+async function uploadClientFiles(files) {
+  const c = curClient(); if (!c) return;
+  for (const file of files) {
+    if (file.size > MAX_FILE) { toast(`«${file.name}» завеликий: максимум ${fmtSize(MAX_FILE)}`, { error: true }); continue; }
+    try {
+      toast(`Завантажую «${file.name}»…`, { ms: 2000 });
+      const meta = await S.store.uploadFile(file, file.name, file.type);
+      updateClient(c.id, x => x.files.push({ id: meta.id, name: meta.name, size: meta.size, type: meta.type, createdAt: meta.createdAt }), { log: { type: 'file', text: `Додано файл «${meta.name}»` } });
+      toast('Файл додано');
+    } catch (e) { toast('Не вдалося завантажити: ' + e.message, { error: true }); }
+  }
+}
+async function editCustomTask(c, t) {
+  const data = await openModal({
+    title: 'Редагувати пункт',
+    body: `<div class="field"><label class="label" for="ct-t">Назва пункту</label><input class="input" id="ct-t" name="title" value="${esc(t.title)}"></div>
+           <div class="field"><label class="label" for="ct-d">Опис</label><textarea class="textarea" id="ct-d" name="description" rows="3">${esc(t.description || '')}</textarea></div>`,
+    actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form' }],
+  });
+  if (!data || !data.title.trim()) return;
+  updateClient(c.id, x => { const m = x.customTasks.find(y => y.id === t.id); m.title = data.title.trim(); m.description = data.description.trim(); });
+}
+
+/* ---------- global listeners ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  if (el.closest('.modal-wrap') || el.closest('.auth')) return;
+  const fn = ACTIONS[el.dataset.act]; if (!fn) return;
+  if (el.disabled) return;
+  if (el.tagName === 'A' && el.dataset.act !== 'closeDrawerLink') e.preventDefault();
+  if (el.tagName === 'TR' && e.target.closest('a,button')) return;
+  fn(el, e);
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-act]:not(button)') && !e.target.closest('.modal-wrap')) { e.preventDefault(); e.target.click(); return; }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.id === 'note-new') { e.preventDefault(); ACTIONS.addNote(); return; }
+  if (e.key === 'Escape' && !modalStack.length && !openMenuEl) {
+    if ($('#drawer')) closeDrawer();
+    else if ($('#app.nav-open')) $('#app').classList.remove('nav-open');
+  }
+});
+document.addEventListener('input', e => { const el = e.target.closest && e.target.closest('[data-in]'); if (el && INPUTS[el.dataset.in]) INPUTS[el.dataset.in](el, e); });
+document.addEventListener('change', e => { const el = e.target.closest && e.target.closest('[data-in]'); if (el && CHANGES[el.dataset.in]) CHANGES[el.dataset.in](el, e); });
+document.addEventListener('dragover', e => {
+  const dz = e.target.closest && e.target.closest('[data-drop]');
+  if (dz && e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); dz.classList.add('over'); }
+});
+document.addEventListener('dragleave', e => { const dz = e.target.closest && e.target.closest('[data-drop]'); if (dz) dz.classList.remove('over'); });
+document.addEventListener('drop', e => {
+  const dz = e.target.closest && e.target.closest('[data-drop]');
+  if (dz && e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); dz.classList.remove('over'); uploadClientFiles([...e.dataTransfer.files]); }
+});
+
+/* ---------- backup / flow import-export ---------- */
+function fileNameById(id) {
+  for (const st of S.settings.stages) for (const t of st.tasks) for (const a of t.attachments) if (a.kind === 'file' && a.fileId === id) return a.name;
+  for (const c of S.clients.values()) for (const f of c.files) if (f.id === id) return f.name;
+  return 'file';
+}
+async function packFiles(ids) {
+  const out = [];
+  for (const id of ids) {
+    try { const blob = await S.store.downloadFile(id); out.push({ id, name: fileNameById(id), type: blob.type, b64: await blobToB64(blob) }); }
+    catch (e) { console.warn('skip file', id, e); }
+  }
+  return out;
+}
+async function exportBackup(withFiles) {
+  const data = { type: 'amflow-backup', version: 1, exportedAt: new Date().toISOString(), settings: clone(S.settings), clients: [...S.clients.values()].map(clone), files: [] };
+  if (withFiles) { toast('Готую копію разом із файлами…', { ms: 2500 }); data.files = await packFiles(collectFileIds()); }
+  downloadBlob(new Blob([JSON.stringify(data)], { type: 'application/json' }), `amflow-backup-${todayISO()}.json`);
+  toast('Резервну копію збережено');
+}
+async function exportFlow() {
+  const ids = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && ids.add(a.fileId))));
+  const data = { type: 'amflow-flow', version: 1, exportedAt: new Date().toISOString(), stages: clone(S.settings.stages), fields: clone(S.settings.fields), vars: clone(S.settings.vars), files: await packFiles(ids) };
+  downloadBlob(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }), `amflow-flow-${todayISO()}.json`);
+  toast('Флоу експортовано');
+}
+async function restoreFiles(files) {
+  let n = 0;
+  for (const f of files || []) {
+    try { await S.store.uploadFile(b64ToBlob(f.b64, f.type), f.name, f.type, f.id); n++; }
+    catch (e) { console.warn('file restore failed', f.name, e); toast(`Файл «${f.name}» не відновлено: ${e.message}`, { error: true }); }
+  }
+  return n;
+}
+async function importFromFile(expect) {
+  const file = await pickFile('.json,application/json'); if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { return toast('Це не схоже на файл AM Flow (.json)', { error: true }); }
+  if (data.type === 'amflow-flow' || (expect === 'flow' && data.type === 'amflow-backup')) return importFlowData(data.type === 'amflow-backup' ? { ...data.settings, files: data.files } : data, file.name);
+  if (data.type === 'amflow-backup') return importBackupData(data);
+  toast('Файл не розпізнано: очікується флоу або резервна копія AM Flow', { error: true });
+}
+async function importFlowData(data, fname) {
+  const n = (data.stages || []).reduce((a, s) => a + (s.tasks || []).length, 0);
+  const ok = await confirmDialog({
+    title: 'Імпортувати флоу?', ic: 'upload', tone: 'primary', confirm: 'Імпортувати',
+    text: `«${esc(fname)}»: ${(data.stages || []).length} ${plural((data.stages || []).length, 'етап', 'етапи', 'етапів')}, ${n} ${plural(n, 'пункт', 'пункти', 'пунктів')}, ${(data.fields || []).length} полів. Поточні етапи, шаблони й поля буде замінено. Позначки клієнтів збережуться для пунктів, які є в обох версіях.`,
+  });
+  if (!ok) return;
+  const oldFiles = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && oldFiles.add(a.fileId))));
+  const restored = await restoreFiles(data.files);
+  const incoming = normalizeSettings({ stages: clone(data.stages || []), fields: clone(data.fields || S.settings.fields), vars: clone(data.vars || []) });
+  const merged = incoming.vars.map(v => { const old = S.settings.vars.find(o => o.key === v.key); return old && old.value && !v.value ? { ...v, value: old.value } : v; });
+  S.settings.vars.forEach(o => { if (o.key && !merged.some(v => v.key === o.key)) merged.push(o); });
+  updateSettings(s => { s.stages = incoming.stages; s.fields = incoming.fields; s.vars = merged; });
+  const keep = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && keep.add(a.fileId))));
+  oldFiles.forEach(id => { if (!keep.has(id)) S.store.deleteFile(id); });
+  toast(`Флоу імпортовано${restored ? `, файлів: ${restored}` : ''}`);
+}
+async function importBackupData(data) {
+  const cnt = (data.clients || []).length;
+  const ok = await confirmDialog({
+    title: 'Відновити з резервної копії?', confirm: 'Замінити все', ic: 'refresh', tone: 'danger',
+    text: `Копія від ${data.exportedAt ? fmtTsFull(Date.parse(data.exportedAt)) : '—'}: ${cnt} ${plural(cnt, 'клієнт', 'клієнти', 'клієнтів')}. Поточні дані (${S.clients.size} ${plural(S.clients.size, 'клієнт', 'клієнти', 'клієнтів')}, флоу й поля) буде замінено вмістом копії.`,
+  });
+  if (!ok) return;
+  toast('Відновлюю дані…', { ms: 2500 });
+  const incomingIds = new Set((data.clients || []).map(c => c.id));
+  for (const c of S.clients.values()) if (!incomingIds.has(c.id)) S.store.deleteClient(c.id);
+  S.clients.clear();
+  const now = Date.now();
+  S.settings = normalizeSettings(clone(data.settings)); S.settings.updatedAt = now; S.store.saveSettings(clone(S.settings));
+  (data.clients || []).forEach(raw => { const c = normalizeClient(clone(raw)); c.updatedAt = now; S.clients.set(c.id, c); S.store.saveClient(clone(c)); });
+  const restored = await restoreFiles(data.files);
+  render();
+  toast(`Відновлено: ${cnt} ${plural(cnt, 'клієнт', 'клієнти', 'клієнтів')}${restored ? `, файлів: ${restored}` : ''}`);
+}
+
+/* ============ AM Flow — boot & auth ============ */
+
+const EMBEDDED = (window.AMFLOW_FIREBASE_CONFIG && window.AMFLOW_FIREBASE_CONFIG.apiKey) ? window.AMFLOW_FIREBASE_CONFIG : null;
+function getConfig() {
+  if (EMBEDDED) return EMBEDDED;
+  try { return JSON.parse(localStorage.getItem(LS.config)) || null; } catch { return null; }
+}
+function parseFirebaseConfig(text) {
+  const t = String(text || '');
+  try { const j = JSON.parse(t); if (j && j.apiKey) return j; } catch {}
+  const out = {};
+  const re = /(apiKey|authDomain|projectId|storageBucket|messagingSenderId|appId|measurementId)\s*["']?\s*:\s*["']([^"']+)["']/g;
+  let m; while ((m = re.exec(t))) out[m[1]] = m[2];
+  return out.apiKey && out.projectId && out.appId ? out : null;
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Не вдалося завантажити ' + src)); document.head.appendChild(s); });
+}
+function screen(html) { document.body.innerHTML = `<div class="auth">${html}</div>`; }
+function showLoading(text = 'Завантаження…') { document.body.innerHTML = `<div class="loading"><div style="display:grid;place-items:center;gap:14px"><div class="spinner"></div><div>${esc(text)}</div></div></div>`; }
+const brandBlock = `<div class="brand"><div class="brand-mark">${icon('route', 17, 2.2)}</div><div><div class="brand-name">AM Flow</div><div class="brand-sub">Робочий флоу акаунт-менеджера</div></div></div>`;
+
+function showWelcome() {
+  screen(`<div class="card auth-card wide">${brandBlock}
+    <h2>Де зберігати дані?</h2><p class="sub">Це можна змінити пізніше: дані переносяться через резервну копію.</p>
+    <button class="choice" id="ch-cloud"><div class="ci">${icon('cloud', 19)}</div><div><div class="ct">Хмара Firebase</div><div class="cd">Синхронізація між ноутбуком і телефоном, вхід за email і паролем, робота офлайн. Потрібно один раз налаштувати проєкт Firebase (≈10 хв, інструкція в README).</div></div></button>
+    <button class="choice" id="ch-local"><div class="ci">${icon('drive', 19)}</div><div><div class="ct">Лише в цьому браузері</div><div class="cd">Без реєстрації, можна почати одразу. Дані не залишають цей комп'ютер.</div></div></button>
+  </div>`);
+  $('#ch-cloud').onclick = () => showCloudSetup(false);
+  $('#ch-local').onclick = () => { localStorage.setItem(LS.mode, 'local'); startApp(new LocalStore()); };
+}
+
+function showCloudSetup(fromApp) {
+  screen(`<div class="card auth-card wide">${brandBlock}
+    <h2>Підключення Firebase</h2><p class="sub">Один раз на пристрій або назавжди, якщо вписати конфіг в <span class="code-chip">index.html</span> (див. README).</p>
+    <ol class="steps-list">
+      <li>Створіть проєкт на <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a>.</li>
+      <li><b>Authentication</b> → Sign-in method → <b>Email/Password</b> → увімкнути. Потім Users → <b>Add user</b> (ваш email і пароль).</li>
+      <li><b>Firestore Database</b> → Create database. У вкладці <b>Rules</b> вставте правила з файлу <span class="code-chip">firestore.rules</span> і впишіть свій email.</li>
+      <li>Project settings → Your apps → <b>Web</b> (&lt;/&gt;) → скопіюйте блок <span class="code-chip">firebaseConfig</span> і вставте нижче.</li>
+    </ol>
+    <div id="cfg-err"></div>
+    <div class="field"><label class="label" for="cfg">firebaseConfig</label><textarea class="textarea" id="cfg" rows="7" style="font-family:var(--mono);font-size:12.5px" placeholder='const firebaseConfig = {&#10;  apiKey: "…",&#10;  authDomain: "…",&#10;  projectId: "…",&#10;  …&#10;};'></textarea></div>
+    <div class="row"><button class="btn ghost" id="cfg-back">${fromApp ? 'Скасувати' : 'Назад'}</button><span class="sp"></span><button class="btn primary" id="cfg-ok">${icon('cloud', 16)}Підключити</button></div>
+  </div>`);
+  $('#cfg-back').onclick = () => fromApp ? location.reload() : showWelcome();
+  $('#cfg-ok').onclick = () => {
+    const cfg = parseFirebaseConfig($('#cfg').value);
+    if (!cfg) { $('#cfg-err').innerHTML = `<div class="err-box">Не вдалося розпізнати конфіг. Потрібні щонайменше apiKey, projectId і appId.</div>`; return; }
+    localStorage.setItem(LS.config, JSON.stringify(cfg)); localStorage.setItem(LS.mode, 'cloud');
+    location.hash = ''; location.reload();
+  };
+}
+
+const AUTH_ERRORS = {
+  'auth/invalid-credential': 'Невірний email або пароль', 'auth/wrong-password': 'Невірний email або пароль', 'auth/user-not-found': 'Користувача з таким email не знайдено',
+  'auth/invalid-email': 'Некоректний email', 'auth/too-many-requests': 'Забагато спроб. Зачекайте кілька хвилин', 'auth/network-request-failed': 'Немає з’єднання з інтернетом',
+  'auth/user-disabled': 'Акаунт вимкнено', 'auth/missing-password': 'Введіть пароль', 'auth/invalid-api-key': 'Невірний apiKey у конфігурації Firebase', 'auth/operation-not-allowed': 'Вхід за email і паролем не увімкнено в Firebase',
+};
+function showLogin(err = '') {
+  const cfg = S.ctx.config;
+  screen(`<form class="card auth-card" id="login" novalidate>${brandBlock}
+    <h2>Вхід</h2><p class="sub">Проєкт <span class="code-chip">${esc(cfg.projectId)}</span></p>
+    <div id="lg-err">${err ? `<div class="err-box">${esc(err)}</div>` : ''}</div>
+    <div class="field"><label class="label" for="lg-email">Email</label><input class="input" id="lg-email" type="email" autocomplete="username" required></div>
+    <div class="field"><label class="label" for="lg-pass">Пароль</label><input class="input" id="lg-pass" type="password" autocomplete="current-password" required></div>
+    <button class="btn primary block" id="lg-btn" type="submit" style="height:40px;margin-top:4px">Увійти</button>
+    <div class="row" style="margin-top:14px;font-size:13px"><button type="button" class="btn ghost sm" id="lg-reset">Забули пароль?</button><span class="sp"></span>
+      ${EMBEDDED ? '' : `<button type="button" class="btn ghost sm" id="lg-change">Змінити підключення</button>`}</div>
+  </form>`);
+  const showErr = m => { $('#lg-err').innerHTML = m ? `<div class="err-box">${esc(m)}</div>` : ''; };
+  $('#lg-email').focus();
+  $('#login').onsubmit = async e => {
+    e.preventDefault();
+    const email = $('#lg-email').value.trim(), pass = $('#lg-pass').value;
+    if (!email || !pass) return showErr('Введіть email і пароль');
+    const b = $('#lg-btn'); b.disabled = true; b.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;border-top-color:#fff"></div>';
+    try { await S.ctx.FB.signInWithEmailAndPassword(S.ctx.auth, email, pass); }
+    catch (er) { showErr(AUTH_ERRORS[er.code] || er.message); b.disabled = false; b.textContent = 'Увійти'; }
+  };
+  $('#lg-reset').onclick = async () => {
+    const email = $('#lg-email').value.trim();
+    if (!email) { showErr('Впишіть email, і ми надішлемо лист для зміни пароля'); $('#lg-email').focus(); return; }
+    try { await S.ctx.FB.sendPasswordResetEmail(S.ctx.auth, email); $('#lg-err').innerHTML = `<div class="callout">${icon('info', 16)}<div>Якщо акаунт існує, лист для зміни пароля надіслано на ${esc(email)}.</div></div>`; }
+    catch (er) { showErr(AUTH_ERRORS[er.code] || er.message); }
+  };
+  const ch = $('#lg-change');
+  if (ch) ch.onclick = () => { localStorage.removeItem(LS.config); localStorage.removeItem(LS.mode); location.reload(); };
+}
+
+async function startCloud(cfg) {
+  showLoading('Підключення до Firebase…');
+  try {
+    if (!window.FB) await loadScript('vendor/firebase.js');
+    const FB = window.FB;
+    const app = FB.initializeApp(cfg);
+    const auth = FB.getAuth(app);
+    let db;
+    try { db = FB.initializeFirestore(app, { localCache: FB.persistentLocalCache({ tabManager: FB.persistentMultipleTabManager() }), ignoreUndefinedProperties: true }); }
+    catch (e) { console.warn('persistent cache unavailable', e); db = FB.initializeFirestore(app, { ignoreUndefinedProperties: true }); }
+    S.ctx = { FB, app, auth, db, config: cfg };
+    FB.onAuthStateChanged(auth, user => {
+      if (user) {
+        if (S.user && S.user.uid === user.uid) return;
+        S.user = user; S.ctx.user = user;
+        startApp(new CloudStore(S.ctx));
+      } else {
+        if (S.user) { location.reload(); return; }
+        showLogin();
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    screen(`<div class="card auth-card">${brandBlock}<h2>Не вдалося підключитися</h2><div class="err-box">${esc(e.message)}</div>
+      <div class="row"><button class="btn" id="re-try">${icon('refresh', 15)}Спробувати ще</button><span class="sp"></span>${EMBEDDED ? '' : `<button class="btn ghost" id="re-cfg">Змінити підключення</button>`}</div></div>`);
+    $('#re-try').onclick = () => location.reload();
+    const rc = $('#re-cfg'); if (rc) rc.onclick = () => { localStorage.removeItem(LS.config); localStorage.removeItem(LS.mode); location.reload(); };
+  }
+}
+
+async function startApp(store) {
+  S.store = store;
+  S.sync = store.status();
+  store.onStatus = st => { S.sync = st; updateSyncEl(); };
+  showLoading('Завантажую дані…');
+  try {
+    const { settings, clients } = await store.init(onRemote);
+    S.settings = normalizeSettings(settings ? clone(settings) : null);
+    S.clients.clear();
+    clients.forEach(c => S.clients.set(c.id, normalizeClient(clone(c))));
+  } catch (e) {
+    console.error(e);
+    const denied = e && (e.code === 'permission-denied' || /permission/i.test(e.message));
+    screen(`<div class="card auth-card wide">${brandBlock}<h2>Не вдалося завантажити дані</h2>
+      <div class="err-box">${esc(e.code || '')} ${esc(e.message || e)}</div>
+      ${denied ? `<div class="callout amber">${icon('lock', 16)}<div>Firestore відхилив доступ. Перевірте, що правила з <span class="code-chip">firestore.rules</span> опубліковані й email у них збігається з тим, яким ви входите${S.user ? ` (<b>${esc(S.user.email)}</b>)` : ''}.</div></div>` : ''}
+      <div class="row"><button class="btn" id="re-try">${icon('refresh', 15)}Спробувати ще</button><span class="sp"></span>${store.mode === 'cloud' ? `<button class="btn ghost" id="re-out">${icon('logout', 15)}Вийти</button>` : ''}</div></div>`);
+    $('#re-try').onclick = () => location.reload();
+    const ro = $('#re-out'); if (ro) ro.onclick = async () => { await S.ctx.FB.signOut(S.ctx.auth); location.reload(); };
+    return;
+  }
+  document.body.innerHTML = shellHtml();
+  setupSortables($('#main'));
+  lastPath = location.hash.split('?')[0];
+  render();
+  updateSyncEl();
+}
+
+async function logout() {
+  if (!S.ctx) return;
+  const ok = await confirmDialog({ title: 'Вийти з акаунта?', text: 'Локальну копію даних на цьому пристрої буде очищено. У хмарі все залишиться.', confirm: 'Вийти', tone: 'amber', ic: 'logout' });
+  if (!ok) return;
+  flushSaves();
+  const t0 = Date.now();
+  while (S.store.pending > 0 && Date.now() - t0 < 5000) await new Promise(r => setTimeout(r, 200));
+  if (S.store.pending > 0) {
+    const force = await confirmDialog({ title: 'Є несинхронізовані зміни', text: 'Схоже, немає інтернету: частина змін ще не потрапила в хмару. Якщо вийти зараз, вони пропадуть.', confirm: 'Все одно вийти' });
+    if (!force) return;
+  }
+  showLoading('Виходжу…');
+  try { S.store.stop(); } catch {}
+  try { await S.ctx.FB.signOut(S.ctx.auth); } catch {}
+  try { await S.ctx.FB.terminate(S.ctx.db); await S.ctx.FB.clearIndexedDbPersistence(S.ctx.db); } catch (e) { console.warn(e); }
+  history.replaceState(null, '', location.pathname);
+  location.reload();
+}
+
+function boot() {
+  let theme = null; try { theme = localStorage.getItem(LS.theme); } catch {}
+  applyTheme(theme || (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  const cfg = getConfig();
+  let mode = null; try { mode = localStorage.getItem(LS.mode); } catch {}
+  if (!mode && EMBEDDED) mode = 'cloud';
+  if (mode === 'local') return startApp(new LocalStore());
+  if (mode === 'cloud' && cfg) return startCloud(cfg);
+  showWelcome();
+}
+boot();
+
+})();
+</script>
+</body>
+</html>

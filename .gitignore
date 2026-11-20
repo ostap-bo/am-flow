@@ -1,0 +1,7 @@
+build/node_modules/
+build/package-lock.json
+# Резервні копії й файли флоу можуть містити дані клієнтів — не комітити
+amflow-*.json
+*-flow.json
+*.backup.json
+.DS_Store
