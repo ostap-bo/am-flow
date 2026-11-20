@@ -3858,26 +3858,16 @@ const FIELD_TYPES = [
   { id: 'url', label: 'Посилання' },
 ];
 const BUILTIN_VARS = [
-  { key: 'клієнт', label: 'Назва клієнта' },
   { key: 'шифр', label: 'Шифр проєкту' },
 ];
+const pname = c => (c && (c.code || c.name)) || '—';
 
 function defaultSettings() {
   return {
     schema: 1,
     stages: [],
-    fields: [
-      { id: 'f_cat', label: 'Категорія', key: '', type: 'select', options: ['A', 'B+', 'B', 'C'], group: 'Основне' },
-      { id: 'f_vert', label: 'Вертикаль / ніша', key: '', type: 'text', group: 'Основне' },
-      { id: 'f_geo', label: 'Гео трафіку', key: '', type: 'text', group: 'Основне' },
-      { id: 'f_plat', label: 'Платформи', key: '', type: 'text', group: 'Основне' },
-      { id: 'f_chat', label: 'Посилання на чат', key: '', type: 'url', group: 'Основне' },
-      { id: 'f_contact', label: 'Контактна особа', key: 'контакт', type: 'text', group: 'Контакти' },
-      { id: 'f_dm', label: 'ЛПР', key: '', type: 'text', group: 'Контакти' },
-      { id: 'f_fin', label: 'Фінанси / оплати', key: '', type: 'text', group: 'Контакти' },
-      { id: 'f_pay', label: 'Умови оплати', key: '', type: 'textarea', group: 'Умови співпраці' },
-    ],
-    vars: [{ key: 'ам', value: '' }],
+    fields: [],
+    vars: [{ key: 'ам', value: '' }, { key: 'саппорт', value: '' }],
     updatedAt: 0,
   };
 }
@@ -3904,10 +3894,10 @@ function normalizeSettings(s) {
 function newClient(data) {
   const now = Date.now();
   return {
-    id: uid('c_'), name: data.name.trim(), code: (data.code || '').trim().toUpperCase(),
+    id: uid('c_'), name: (data.code || '').trim().toUpperCase(), code: (data.code || '').trim().toUpperCase(),
     status: data.status || 'onboarding', lang: data.lang || 'uk', color: data.color || PALETTE[Math.floor(Math.random() * PALETTE.length)],
     startDate: data.startDate || todayISO(), fields: {}, progress: {}, customTasks: [], notes: [], files: [],
-    history: [{ id: uid('h_'), at: now, type: 'created', text: 'Клієнта створено' }],
+    history: [{ id: uid('h_'), at: now, type: 'created', text: 'Проєкт створено' }],
     createdAt: now, updatedAt: now,
   };
 }
@@ -3915,7 +3905,7 @@ function normalizeClient(c) {
   c.fields = c.fields || {}; c.progress = c.progress || {}; c.customTasks = c.customTasks || [];
   c.notes = c.notes || []; c.files = c.files || []; c.history = c.history || [];
   c.status = c.status || 'onboarding'; c.lang = c.lang || 'uk'; c.startDate = c.startDate || todayISO();
-  c.color = c.color || colorFor(c.id); c.code = c.code || ''; c.name = c.name || 'Без назви';
+  c.color = c.color || colorFor(c.id); c.code = c.code || c.name || ''; c.name = c.code;
   return c;
 }
 
@@ -4110,7 +4100,7 @@ function clientStages(c) {
     tasks: [...st.tasks.map(t => ({ ...t, custom: false })), ...c.customTasks.filter(t => t.stageId === st.id).map(t => ({ ...t, custom: true, attachments: [] }))],
   }));
   const orphan = c.customTasks.filter(t => !S.settings.stages.some(s => s.id === t.stageId));
-  if (orphan.length) stages.push({ id: '__extra', title: 'Додаткові пункти', description: 'Пункти клієнта, етап яких видалено з флоу', tasks: orphan.map(t => ({ ...t, custom: true, attachments: [] })) });
+  if (orphan.length) stages.push({ id: '__extra', title: 'Додаткові пункти', description: 'Пункти проєкту, етап яких видалено з флоу', tasks: orphan.map(t => ({ ...t, custom: true, attachments: [] })) });
   return stages;
 }
 const taskState = (c, tid) => c.progress[tid] || {};
@@ -4170,14 +4160,12 @@ function dueItems(filterFn = () => true) {
 }
 function allVars(c) {
   const map = {};
-  if (c) { map['клієнт'] = c.name; map['шифр'] = c.code; }
-  S.settings.fields.forEach(f => { if (f.key && c) map[f.key] = c.fields[f.id] || ''; });
+  if (c) map['шифр'] = c.code;
   S.settings.vars.forEach(v => { if (v.key) map[v.key] = v.value || ''; });
   return map;
 }
 function varKeys() {
   const keys = BUILTIN_VARS.map(v => ({ key: v.key, label: v.label }));
-  S.settings.fields.forEach(f => f.key && keys.push({ key: f.key, label: f.label }));
   S.settings.vars.forEach(v => v.key && keys.push({ key: v.key, label: 'Моя змінна' }));
   return keys;
 }
@@ -4192,7 +4180,7 @@ function fillHtml(text, c) {
   return esc(text).replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (m, k) => {
     const key = k.replace(/&amp;/g, '&');
     const v = c ? map[key] : '';
-    return v ? `<span class="var ok" title="{{${esc(key)}}}">${esc(v)}</span>` : `<span class="var" title="${c ? 'Не заповнено в картці клієнта' : 'Змінна'}">{{${k}}}</span>`;
+    return v ? `<span class="var ok" title="{{${esc(key)}}}">${esc(v)}</span>` : `<span class="var" title="${c ? 'Змінна не заповнена' : 'Змінна'}">{{${k}}}</span>`;
   });
 }
 function findTask(tid) {
@@ -4323,7 +4311,7 @@ function applyTheme(t) {
 function currentTheme() { return document.documentElement.dataset.theme || 'light'; }
 
 /* ---------- small renderers ---------- */
-const avatarHtml = (c, cls = '') => `<div class="avatar ${cls}" style="background:${esc(c.color || colorFor(c.id))}">${esc(initials(c.code || c.name))}</div>`;
+const avatarHtml = (c, cls = '') => `<div class="avatar ${cls}" style="background:${esc(c.color || colorFor(c.id))}">${esc((c.code ? c.code : initials(c.name)).slice(0, 3))}</div>`;
 const statusBadge = id => { const s = statusOf(id); return `<span class="badge ${s.tone}"><span class="bd"></span>${s.label}</span>`; };
 const ringHtml = (pct, done, sm = false) => `<div class="ring ${sm ? 'sm' : ''} ${done ? 'done' : ''}" style="--p:${pct}"><span>${sm ? '' : pct + '%'}</span></div>`;
 const progressBar = (pct, done) => `<div class="progress ${done ? 'done' : ''}"><i style="width:${pct}%"></i></div>`;
@@ -4358,7 +4346,7 @@ function shellHtml() {
         <div class="brand-mark" style="width:26px;height:26px;border-radius:8px">${icon('route', 15, 2.2)}</div>
         <div class="brand-name">AM Flow</div>
         <div class="sp"></div>
-        <button class="icon-btn" data-act="newClient" aria-label="Новий клієнт">${icon('plus', 19)}</button>
+        <button class="icon-btn" data-act="newClient" aria-label="Новий проєкт">${icon('plus', 19)}</button>
       </header>
       <main id="main" tabindex="-1"></main>
     </div>
@@ -4369,7 +4357,7 @@ function renderSidebar(r) {
   const sb = $('#sidebar'); if (!sb) return;
   const p0 = r.parts[0] || '';
   const all = [...S.clients.values()];
-  const live = all.filter(c => c.status !== 'finished').sort((a, b) => a.name.localeCompare(b.name, 'uk'));
+  const live = all.filter(c => c.status !== 'finished').sort((a, b) => pname(a).localeCompare(pname(b), 'uk'));
   const overdueSet = new Set(dueItems(d => dueTone(d) === 'overdue').map(x => x.c.id));
   const syncLabel = { synced: 'Синхронізовано', saving: 'Зберігаю…', offline: 'Офлайн · зміни збережено локально', error: 'Помилка синхронізації', local: 'Дані лише в цьому браузері' }[S.sync] || '';
   const syncCls = S.sync === 'local' ? 'offline' : S.sync;
@@ -4380,17 +4368,17 @@ function renderSidebar(r) {
     </div>
     <nav class="nav">
       <a class="nav-item ${p0 === '' ? 'active' : ''}" href="#/">${icon('grid', 17)}Огляд</a>
-      <a class="nav-item ${p0 === 'clients' || p0 === 'c' ? 'active' : ''}" href="#/clients">${icon('users', 17)}Клієнти<span class="count">${all.length || ''}</span></a>
+      <a class="nav-item ${p0 === 'clients' || p0 === 'c' ? 'active' : ''}" href="#/clients">${icon('users', 17)}Проєкти<span class="count">${all.length || ''}</span></a>
       <a class="nav-item ${p0 === 'settings' ? 'active' : ''}" href="#/settings">${icon('sliders', 17)}Налаштування</a>
     </nav>
     <div class="nav-section">У роботі</div>
     <div class="nav-clients">
       ${live.map(c => { const pr = progressOf(c); return `
-        <a class="nav-client ${p0 === 'c' && r.parts[1] === c.id ? 'active' : ''}" href="#/c/${c.id}" title="${esc(c.name)} · ${pr.pct}%">
-          ${ringHtml(pr.pct, pr.finished, true)}<span class="nm">${esc(c.name)}</span>
-          ${overdueSet.has(c.id) ? `<span class="badge red" style="height:18px;padding:0 5px" title="Є прострочені пункти">${icon('clock', 11)}</span>` : c.code ? `<span class="muted" style="font-size:11.5px;font-family:var(--mono)">${esc(c.code)}</span>` : ''}
-        </a>`; }).join('') || `<div class="muted" style="padding:6px 10px;font-size:13px">Поки немає клієнтів</div>`}
-      <button class="nav-item" data-act="newClient" style="margin-top:4px;color:var(--text-3)">${icon('plus', 16)}Новий клієнт</button>
+        <a class="nav-client ${p0 === 'c' && r.parts[1] === c.id ? 'active' : ''}" href="#/c/${c.id}" title="${esc(pname(c))} · ${pr.pct}%" style="font-family:var(--mono);font-size:13px">
+          ${ringHtml(pr.pct, pr.finished, true)}<span class="nm">${esc(pname(c))}</span>
+          ${overdueSet.has(c.id) ? `<span class="badge red" style="height:18px;padding:0 5px" title="Є прострочені пункти">${icon('clock', 11)}</span>` : ''}
+        </a>`; }).join('') || `<div class="muted" style="padding:6px 10px;font-size:13px">Поки немає проєктів</div>`}
+      <button class="nav-item" data-act="newClient" style="margin-top:4px;color:var(--text-3)">${icon('plus', 16)}Новий проєкт</button>
     </div>
     <div class="sidebar-foot">
       <div class="sync ${syncCls}" title="${esc(syncLabel)}"><span class="dot"></span><span>${esc(syncLabel)}</span></div>
@@ -4423,9 +4411,9 @@ function viewDashboard() {
   if (!all.length) {
     const noFlow = !S.settings.stages.length;
     return `<div class="page">${head}<div class="card">${emptyState({
-      ic: 'route', title: noFlow ? 'Почнімо з флоу' : 'Додайте першого клієнта',
-      text: noFlow ? 'Спершу імпортуйте чернетку флоу з файлу або створіть етапи вручну. Потім додайте клієнта: картка підхопить етапи автоматично.' : 'Створіть картку клієнта. Флоу з налаштувань підтягнеться автоматично, і ви побачите, що робити далі.',
-      actions: `<div class="row" style="justify-content:center">${noFlow ? `<a class="btn primary" href="#/settings">${icon('layers', 16)}Налаштувати флоу</a><button class="btn" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>` : `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>`}</div>`,
+      ic: 'route', title: noFlow ? 'Почнімо з флоу' : 'Додайте перший проєкт',
+      text: noFlow ? 'Спершу імпортуйте чернетку флоу з файлу або створіть етапи вручну. Потім додайте проєкт: воронка підтягнеться автоматично.' : 'Створіть проєкт за шифром. Воронка з налаштувань підтягнеться автоматично, і ви побачите, що робити далі.',
+      actions: `<div class="row" style="justify-content:center">${noFlow ? `<a class="btn primary" href="#/settings">${icon('layers', 16)}Налаштувати флоу</a><button class="btn" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>` : `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>`}</div>`,
     })}</div></div>`;
   }
 
@@ -4435,8 +4423,8 @@ function viewDashboard() {
   const rows = live.map(c => ({ c, pr: progressOf(c) })).sort((a, b) => a.pr.pct - b.pr.pct);
   return `<div class="page">${head}
     <div class="grid cols-4 mb-16">
-      ${stat('users', '', 'Клієнти в роботі', live.length, onb ? `${onb} на онбордингу` : 'Без онбордингів')}
-      ${stat('alert', 'red', 'Прострочено', overdue.length, overdue.length ? `у ${new Set(overdue.map(x => x.c.id)).size} ${plural(new Set(overdue.map(x => x.c.id)).size, 'клієнта', 'клієнтів', 'клієнтів')}` : 'Усе вчасно')}
+      ${stat('users', '', 'Проєкти в роботі', live.length, onb ? `${onb} на онбордингу` : 'Без онбордингів')}
+      ${stat('alert', 'red', 'Прострочено', overdue.length, overdue.length ? `у ${new Set(overdue.map(x => x.c.id)).size} ${plural(new Set(overdue.map(x => x.c.id)).size, 'проєкті', 'проєктах', 'проєктах')}` : 'Усе вчасно')}
       ${stat('calendar', 'amber', 'На тиждень', week.length, todayItems.length ? `${todayItems.length} на сьогодні` : 'На сьогодні нічого')}
       ${stat('checkCircle', 'green', 'Виконано за 7 днів', doneWeek, plural(doneWeek, 'пункт', 'пункти', 'пунктів'))}
     </div>
@@ -4447,22 +4435,22 @@ function viewDashboard() {
           <div class="list" style="margin-top:10px">
             ${attention.length ? attention.map(x => `
               <a class="list-item" href="#/c/${x.c.id}?task=${x.t.id}">
-                ${avatarHtml(x.c, 'sm')}
-                <div class="grow"><div class="t">${esc(x.t.title)}</div><div class="s">${esc(x.c.name)} · ${esc(x.st.title)}</div></div>
+                <span class="code-chip" style="min-width:48px;text-align:center">${esc(pname(x.c))}</span>
+                <div class="grow"><div class="t">${esc(x.t.title)}</div><div class="s">${esc(x.st.title)}</div></div>
                 ${dueChip(x.due)}
               </a>`).join('') : emptyState({ ic: 'checkCircle', title: 'Усе під контролем', text: 'Немає прострочених пунктів і термінів на найближчий тиждень.', sm: true })}
-            ${attentionAll.length > attention.length ? `<div class="list-more">І ще ${attentionAll.length - attention.length} ${plural(attentionAll.length - attention.length, 'пункт', 'пункти', 'пунктів')} — дивіться в картках клієнтів</div>` : ''}
+            ${attentionAll.length > attention.length ? `<div class="list-more">І ще ${attentionAll.length - attention.length} ${plural(attentionAll.length - attention.length, 'пункт', 'пункти', 'пунктів')} — дивіться на сторінках проєктів</div>` : ''}
           </div>
         </div>
         <div class="card" style="overflow:hidden">
-          <div class="card-head"><h2 class="card-title">Клієнти в роботі</h2><a class="btn ghost sm" href="#/clients">Усі ${icon('chevR', 14)}</a></div>
+          <div class="card-head"><h2 class="card-title">Проєкти в роботі</h2><a class="btn ghost sm" href="#/clients">Усі ${icon('chevR', 14)}</a></div>
           <div style="overflow-x:auto;margin-top:6px">
-          ${rows.length ? `<table class="table" style="table-layout:fixed"><thead><tr><th style="width:38%">Клієнт</th><th class="hide-m">Етап і наступний крок</th><th style="width:130px">Прогрес</th></tr></thead><tbody>
+          ${rows.length ? `<table class="table" style="table-layout:fixed"><thead><tr><th style="width:38%">Проєкт</th><th class="hide-m">Етап і наступний крок</th><th style="width:130px">Прогрес</th></tr></thead><tbody>
             ${rows.map(({ c, pr }) => `<tr data-act="openClient" data-id="${c.id}">
-              <td><div class="cell-client">${avatarHtml(c)}<div style="min-width:0"><div class="nm cell-trunc" style="max-width:100%">${esc(c.name)}</div><div class="cell-muted">${statusOf(c.status).label}${c.code ? ' · ' + esc(c.code) : ''}</div></div></div></td>
+              <td><div class="cell-client"><div style="min-width:0"><div class="nm cell-trunc" style="max-width:100%;font-family:var(--mono)">${esc(pname(c))}</div><div class="cell-muted">${statusOf(c.status).label}</div></div></div></td>
               <td class="hide-m"><div class="cell-trunc" style="max-width:100%;font-weight:500">${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : '—'}</div><div class="cell-muted cell-trunc" style="max-width:100%">${pr.next ? 'Далі: ' + esc(pr.next.title) : ''}</div></td>
               <td><div class="row">${progressBar(pr.pct, pr.finished)}<span class="cell-muted" style="width:36px;text-align:right;flex-shrink:0">${pr.pct}%</span></div></td>
-            </tr>`).join('')}</tbody></table>` : emptyState({ ic: 'users', title: 'Немає активних клієнтів', sm: true })}
+            </tr>`).join('')}</tbody></table>` : emptyState({ ic: 'users', title: 'Немає активних проєктів', sm: true })}
           </div>
         </div>
       </div>
@@ -4481,18 +4469,18 @@ function viewClients() {
   const all = [...S.clients.values()];
   const q = S.ui.q.trim().toLowerCase();
   const counts = { all: all.length }; STATUSES.forEach(s => counts[s.id] = all.filter(c => c.status === s.id).length);
-  let list = all.filter(c => (S.ui.filter === 'all' || c.status === S.ui.filter) && (!q || (c.name + ' ' + c.code + ' ' + Object.values(c.fields).join(' ')).toLowerCase().includes(q)));
+  let list = all.filter(c => (S.ui.filter === 'all' || c.status === S.ui.filter) && (!q || pname(c).toLowerCase().includes(q)));
   const withPr = list.map(c => ({ c, pr: progressOf(c) }));
   if (S.ui.sort === 'progress') withPr.sort((a, b) => a.pr.pct - b.pr.pct);
   else if (S.ui.sort === 'recent') withPr.sort((a, b) => b.c.updatedAt - a.c.updatedAt);
-  else withPr.sort((a, b) => a.c.name.localeCompare(b.c.name, 'uk'));
+  else withPr.sort((a, b) => pname(a.c).localeCompare(pname(b.c), 'uk'));
   return `<div class="page">
     <div class="page-head">
-      <div><h1 class="page-title">Клієнти</h1><div class="page-sub">${all.length} ${plural(all.length, 'клієнт', 'клієнти', 'клієнтів')} · однаковий флоу для всіх</div></div>
-      <button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>
+      <div><h1 class="page-title">Проєкти</h1><div class="page-sub">${all.length} ${plural(all.length, 'проєкт', 'проєкти', 'проєктів')} · однаковий флоу для всіх</div></div>
+      <button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>
     </div>
     <div class="toolbar">
-      <label class="search"><span class="sr-only">Пошук</span>${icon('search', 16)}<input class="input" id="client-search" placeholder="Пошук за назвою, шифром, полями" value="${esc(S.ui.q)}" data-in="search"></label>
+      <label class="search"><span class="sr-only">Пошук</span>${icon('search', 16)}<input class="input" id="client-search" placeholder="Пошук за шифром" value="${esc(S.ui.q)}" data-in="search"></label>
       <div class="seg" role="tablist">
         <button class="${S.ui.filter === 'all' ? 'on' : ''}" data-act="filter" data-v="all">Усі · ${counts.all}</button>
         ${STATUSES.map(s => `<button class="${S.ui.filter === s.id ? 'on' : ''}" data-act="filter" data-v="${s.id}">${s.label} · ${counts[s.id]}</button>`).join('')}
@@ -4507,12 +4495,12 @@ function viewClients() {
     ${withPr.length ? `<div class="client-grid">${withPr.map(({ c, pr }) => {
       const od = dueItems(d => dueTone(d) === 'overdue').filter(x => x.c.id === c.id).length;
       return `<a class="card client-card" href="#/c/${c.id}">
-        <div class="cc-top">${avatarHtml(c)}<div style="min-width:0;flex:1"><div class="nm">${esc(c.name)}</div><div class="cc-meta">${c.code ? `<span class="code-chip">${esc(c.code)}</span>` : ''}<span>${langOf(c.lang).short}</span></div></div>${statusBadge(c.status)}</div>
+        <div class="cc-top"><div style="min-width:0;flex:1"><div class="nm" style="font-family:var(--mono);font-size:17px;letter-spacing:.02em">${esc(pname(c))}</div><div class="cc-meta"><span>${langOf(c.lang).name}</span><span>·</span><span>старт ${fmtDate(c.startDate)}</span></div></div>${statusBadge(c.status)}</div>
         <div><div class="cc-row"><span>${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : 'Флоу порожній'}</span><span>${pr.done}/${pr.total}</span></div>${progressBar(pr.pct, pr.finished)}</div>
         <div class="cc-next">${icon('target', 15)}<span>${pr.next ? `<b>Далі:</b> ${esc(pr.next.title)}` : 'Немає невиконаних пунктів'}</span></div>
         ${od ? `<div><span class="badge red">${icon('clock', 12)}${od} ${plural(od, 'прострочений пункт', 'прострочені пункти', 'прострочених пунктів')}</span></div>` : ''}
       </a>`; }).join('')}</div>`
-    : `<div class="card">${all.length ? emptyState({ ic: 'search', title: 'Нічого не знайдено', text: 'Спробуйте інший запит або фільтр.' }) : emptyState({ ic: 'users', title: 'Ще немає клієнтів', text: 'Створіть першу картку клієнта: флоу підтягнеться автоматично.', actions: `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий клієнт</button>` })}</div>`}
+    : `<div class="card">${all.length ? emptyState({ ic: 'search', title: 'Нічого не знайдено', text: 'Спробуйте інший запит або фільтр.' }) : emptyState({ ic: 'users', title: 'Ще немає проєктів', text: 'Створіть перший проєкт: воронка підтягнеться автоматично.', actions: `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>` })}</div>`}
   </div>`;
 }
 
@@ -4522,21 +4510,18 @@ function viewClient(c, tab, q) {
   const hist = c.history.length;
   const tabs = [
     { id: 'process', label: 'Процес', count: `${pr.done}/${pr.total}` },
-    { id: 'info', label: 'Інфо', count: c.notes.length || '' },
     { id: 'history', label: 'Історія', count: hist },
   ];
   let body = '';
-  if (tab === 'info') body = viewClientInfo(c);
-  else if (tab === 'history') body = viewClientHistory(c);
+  if (tab === 'history') body = viewClientHistory(c);
   else body = viewClientProcess(c, pr, q);
   return `<div class="page">
-    <div class="crumbs"><a href="#/clients">Клієнти</a>${icon('chevR', 13)}<span>${esc(c.name)}</span></div>
+    <div class="crumbs"><a href="#/clients">Проєкти</a>${icon('chevR', 13)}<span>${esc(pname(c))}</span></div>
     <div class="client-head">
-      ${avatarHtml(c, 'lg')}
       <div class="title-wrap">
-        <h1>${esc(c.name)} ${c.code ? `<span class="code-chip" style="font-size:13px">${esc(c.code)}</span>` : ''}</h1>
+        <h1 style="font-family:var(--mono);letter-spacing:.02em">${esc(pname(c))}</h1>
         <div class="meta">
-          <select class="select status-select" data-in="cstatus" aria-label="Статус клієнта">${STATUSES.map(s => `<option value="${s.id}" ${c.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
+          <select class="select status-select" data-in="cstatus" aria-label="Статус проєкту">${STATUSES.map(s => `<option value="${s.id}" ${c.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
           <span class="badge outline" title="Мова комунікації">${icon('globe', 12)}${langOf(c.lang).name}</span>
           <span>Старт ${fmtDate(c.startDate)}</span>
         </div>
@@ -4561,7 +4546,7 @@ function stageIsOpen(c, st, pr) {
 
 function viewClientProcess(c, pr, q) {
   if (!pr.stages.length) {
-    return `<div class="card">${emptyState({ ic: 'layers', title: 'Флоу ще порожній', text: 'Етапи й підзадачі однакові для всіх клієнтів і налаштовуються в одному місці.', actions: `<a class="btn primary" href="#/settings">${icon('sliders', 16)}Налаштувати флоу</a>` })}</div>`;
+    return `<div class="card">${emptyState({ ic: 'layers', title: 'Флоу ще порожній', text: 'Етапи й підзадачі однакові для всіх проєктів і налаштовуються в одному місці.', actions: `<a class="btn primary" href="#/settings">${icon('sliders', 16)}Налаштувати флоу</a>` })}</div>`;
   }
   const nextDue = pr.next ? effDue(c, pr.next) : null;
   return `
@@ -4597,7 +4582,7 @@ function stageHtml(c, s, i, pr) {
     </div>
     <div class="stage-body">
       ${st.tasks.length ? st.tasks.map(t => taskHtml(c, t)).join('') : `<div class="muted" style="padding:14px 18px">У цьому етапі ще немає пунктів</div>`}
-      ${st.id !== '__extra' ? `<button class="add-task" data-act="addCustomTask" data-sid="${st.id}">${icon('plus', 15)}Додати пункт лише для цього клієнта</button>` : ''}
+      ${st.id !== '__extra' ? `<button class="add-task" data-act="addCustomTask" data-sid="${st.id}">${icon('plus', 15)}Додати пункт лише для цього проєкту</button>` : ''}
     </div>
   </section>`;
 }
@@ -4613,13 +4598,12 @@ function taskHtml(c, t) {
   if (nText) subs.push(`<span class="it">${icon('msg', 13)}${nText} ${plural(nText, 'шаблон', 'шаблони', 'шаблонів')}</span>`);
   if (nFile) subs.push(`<span class="it">${icon('clip', 13)}${nFile}</span>`);
   if (nLink) subs.push(`<span class="it">${icon('link', 13)}${nLink}</span>`);
-  if (p.note) subs.push(`<span class="it">${icon('note', 13)}Нотатка</span>`);
   if (!p.done && !p.skipped && due) subs.push(`<span class="due-m">${dueChip(due)}</span>`);
   return `<div class="task ${p.done ? 'done' : ''} ${p.skipped ? 'skipped' : ''} ${open ? 'open' : ''}" id="task-${t.id}">
     <div class="task-row" data-act="toggleTask" data-tid="${t.id}">
       <button class="switch" role="switch" id="sw-${t.id}" aria-checked="${!!p.done}" aria-label="Виконано: ${esc(t.title)}" data-act="toggleDone" data-tid="${t.id}" ${p.skipped ? 'disabled' : ''}></button>
       <div class="task-main">
-        <div class="task-title"><span class="tt">${esc(t.title)}</span>${t.custom ? '<span class="badge violet">Лише для клієнта</span>' : ''}${p.skipped ? '<span class="badge">Не потрібно</span>' : ''}</div>
+        <div class="task-title"><span class="tt">${esc(t.title)}</span>${t.custom ? '<span class="badge violet">Лише для проєкту</span>' : ''}${p.skipped ? '<span class="badge">Не потрібно</span>' : ''}</div>
         ${subs.length ? `<div class="task-sub">${subs.join('')}</div>` : ''}
       </div>
       <div class="task-meta">
@@ -4678,67 +4662,7 @@ function taskBodyHtml(c, t, p, due) {
           ${p.due ? `<button class="btn ghost sm" data-act="resetDue" data-tid="${t.id}" title="${auto ? 'Повернути рекомендований: ' + fmtDate(auto) : 'Прибрати термін'}">${icon('undo', 14)}${auto ? 'Рекомендований' : 'Прибрати'}</button>` : ''}
         </div>
       </div>
-      <div class="field" style="flex:1;min-width:240px">
-        <div class="mini-label">Нотатка до пункту</div>
-        <textarea class="textarea" rows="2" style="min-height:38px" placeholder="Що важливо пам'ятати саме для цього клієнта" data-in="taskNote" data-tid="${t.id}">${esc(p.note || '')}</textarea>
-      </div>
     </div>`;
-}
-
-function fieldControl(f, val) {
-  const attrs = `data-in="cfield" data-fid="${f.id}" data-prev="${esc(val || '')}" aria-label="${esc(f.label)}"`;
-  const common = `class="inline-input" ${attrs}`;
-  if (f.type === 'textarea') return `<textarea class="inline-input auto" ${attrs} rows="2" placeholder="—">${esc(val || '')}</textarea>`;
-  if (f.type === 'select') return `<select class="inline-input select" ${attrs}><option value="">—</option>${(f.options || []).map(o => `<option ${o === val ? 'selected' : ''}>${esc(o)}</option>`).join('')}${val && !(f.options || []).includes(val) ? `<option selected>${esc(val)}</option>` : ''}</select>`;
-  if (f.type === 'date') return `<input type="date" ${common} value="${esc(val || '')}" style="max-width:200px">`;
-  if (f.type === 'url') return `<input type="url" ${common} value="${esc(val || '')}" placeholder="https://…">${val ? `<a class="ext" href="${esc(val)}" target="_blank" rel="noopener">${icon('ext', 12)}Відкрити</a>` : ''}`;
-  return `<textarea class="inline-input auto" data-single ${attrs} rows="1" placeholder="—">${esc(val || '')}</textarea>`;
-}
-
-function viewClientInfo(c) {
-  const groups = [];
-  S.settings.fields.forEach(f => { let g = groups.find(x => x.name === f.group); if (!g) groups.push(g = { name: f.group, fields: [] }); g.fields.push(f); });
-  const core = `
-    <div class="frow"><div class="fl">Назва клієнта</div><div class="fv"><input class="inline-input" data-in="cname" value="${esc(c.name)}" data-prev="${esc(c.name)}" aria-label="Назва клієнта"></div></div>
-    <div class="frow"><div class="fl">Шифр проєкту</div><div class="fv"><input class="inline-input" data-in="ccode" value="${esc(c.code)}" data-prev="${esc(c.code)}" style="font-family:var(--mono);text-transform:uppercase" placeholder="—" aria-label="Шифр проєкту"></div></div>
-    <div class="frow"><div class="fl">Мова комунікації</div><div class="fv"><select class="inline-input select" data-in="clang" aria-label="Мова комунікації">${LANGS.map(l => `<option value="${l.id}" ${c.lang === l.id ? 'selected' : ''}>${l.name}</option>`).join('')}</select></div></div>
-    <div class="frow"><div class="fl">Дата старту</div><div class="fv"><input type="date" class="inline-input" data-in="cstart" value="${esc(c.startDate)}" style="max-width:200px" aria-label="Дата старту"></div></div>`;
-  const firstIsCore = groups.length && groups[0].name === 'Основне';
-  const groupsHtml = (firstIsCore ? groups : [{ name: 'Основне', fields: [] }, ...groups]).map((g, gi) => `
-    <div class="fgroup"><div class="fgroup-title">${esc(g.name)}</div>
-      ${gi === 0 ? core : ''}
-      ${g.fields.map(f => `<div class="frow"><div class="fl">${esc(f.label)}${f.key ? ` <span class="muted" style="font-family:var(--mono);font-size:11px" title="Змінна для шаблонів">{{${esc(f.key)}}}</span>` : ''}</div><div class="fv">${fieldControl(f, c.fields[f.id])}</div></div>`).join('')}
-    </div>`).join('<div style="border-top:1px solid var(--border)"></div>');
-
-  const notes = [...c.notes].sort((a, b) => b.createdAt - a.createdAt);
-  return `<div class="info-layout">
-    <div class="card" style="padding-bottom:6px">${groupsHtml}
-      <div class="row" style="padding:8px 20px 12px"><a class="btn ghost sm" href="#/settings/fields">${icon('sliders', 14)}Налаштувати поля</a><span class="muted" style="font-size:12.5px">Зміни зберігаються автоматично</span></div>
-    </div>
-    <div class="grid">
-      <div class="card">
-        <div class="card-head" style="padding-bottom:12px"><h2 class="card-title">Нотатки</h2><span class="card-sub">${notes.length || ''}</span></div>
-        <div class="notes-composer" style="border-top:1px solid var(--border)">
-          <textarea class="textarea" id="note-new" placeholder="Що важливо не забути: домовленості, нюанси, ідеї…"></textarea>
-          <div class="row" style="margin-top:8px"><span class="muted" style="font-size:12px"><span class="kbd">Ctrl</span> + <span class="kbd">Enter</span></span><div class="sp"></div><button class="btn primary sm" data-act="addNote">${icon('plus', 14)}Додати</button></div>
-        </div>
-        ${notes.length ? notes.map(n => `<div class="note" id="note-${n.id}">
-          <div class="note-head">${icon('clock', 12)}${fmtTsFull(n.createdAt)}${n.updatedAt && n.updatedAt !== n.createdAt ? ' · змінено' : ''}<span class="sp"></span>
-            <button class="icon-btn sm" data-act="editNote" data-nid="${n.id}" aria-label="Редагувати">${icon('edit', 14)}</button>
-            <button class="icon-btn sm danger" data-act="delNote" data-nid="${n.id}" aria-label="Видалити">${icon('trash', 14)}</button></div>
-          <div class="note-text">${esc(n.text)}</div></div>`).join('') : `<div class="muted" style="padding:16px 18px;font-size:13px">Поки немає нотаток</div>`}
-      </div>
-      <div class="card">
-        <div class="card-head" style="padding-bottom:12px"><h2 class="card-title">Файли клієнта</h2><span class="card-sub">до ${fmtSize(MAX_FILE)}</span></div>
-        <div style="padding:0 16px 16px">
-          <div class="dropzone" data-act="uploadClientFile" data-drop="client" role="button" tabindex="0">${icon('upload', 18)}<div style="margin-top:4px"><b>Оберіть файл</b> або перетягніть сюди</div></div>
-          ${c.files.length ? `<div class="atts" style="margin-top:12px">${c.files.map(f => `<div class="att"><div class="att-file"><div class="ico">${icon('file', 17)}</div><div class="grow"><div class="nm">${esc(f.name)}</div><div class="sz">${fmtSize(f.size)} · ${fmtTs(f.createdAt)}</div></div>
-            <button class="icon-btn sm" data-act="dlFile" data-fid="${f.id}" data-name="${esc(f.name)}" aria-label="Завантажити">${icon('download', 16)}</button>
-            <button class="icon-btn sm danger" data-act="delClientFile" data-fid="${f.id}" aria-label="Видалити">${icon('trash', 16)}</button></div></div>`).join('')}</div>` : ''}
-        </div>
-      </div>
-    </div>
-  </div>`;
 }
 
 const HIST = {
@@ -4749,7 +4673,7 @@ const HIST = {
 function tlItem(h, c) {
   const [ic, tone] = HIST[h.type] || ['info', ''];
   return `<div class="tl-item"><div class="tl-ico ${tone}">${icon(ic, 14, 2.4)}</div>
-    <div class="tl-text">${c ? `<a class="cl" href="#/c/${c.id}" style="color:var(--text)">${esc(c.name)}</a> · ` : ''}${esc(h.text)}</div>
+    <div class="tl-text">${c ? `<a class="cl" href="#/c/${c.id}" style="color:var(--text);font-family:var(--mono)">${esc(pname(c))}</a> · ` : ''}${esc(h.text)}</div>
     <div class="tl-time" title="${fmtTsFull(h.at)}">${c ? relTime(h.at) : fmtTime(h.at)}</div></div>`;
 }
 function viewClientHistory(c) {
@@ -4767,16 +4691,15 @@ function viewClientHistory(c) {
 
 const SETTINGS_TABS = [
   { id: 'flow', label: 'Флоу етапів', ic: 'layers' },
-  { id: 'fields', label: 'Поля картки', ic: 'list' },
   { id: 'vars', label: 'Змінні й вигляд', ic: 'braces' },
   { id: 'data', label: 'Дані й синхронізація', ic: 'database' },
 ];
 
 function viewSettings(tab) {
   tab = SETTINGS_TABS.some(t => t.id === tab) ? tab : 'flow';
-  const body = tab === 'fields' ? viewSetFields() : tab === 'vars' ? viewSetVars() : tab === 'data' ? viewSetData() : viewSetFlow();
+  const body = tab === 'vars' ? viewSetVars() : tab === 'data' ? viewSetData() : viewSetFlow();
   return `<div class="page">
-    <div class="page-head"><div><h1 class="page-title">Налаштування</h1><div class="page-sub">Спільні для всіх клієнтів: флоу, поля картки, шаблони й дані</div></div></div>
+    <div class="page-head"><div><h1 class="page-title">Налаштування</h1><div class="page-sub">Спільні для всіх проєктів: флоу, шаблони й дані</div></div></div>
     <div class="settings-layout">
       <nav class="settings-nav">${SETTINGS_TABS.map(t => `<a class="nav-item ${tab === t.id ? 'active' : ''}" href="#/settings/${t.id}">${icon(t.ic, 16)}${t.label}</a>`).join('')}</nav>
       <div>${body}</div>
@@ -4791,7 +4714,7 @@ function viewSetFlow() {
   return `
     <div class="row wrap" style="align-items:flex-start;margin-bottom:16px">
       <div style="flex:1;min-width:240px"><h2 class="section-title">Флоу етапів</h2>
-        <p class="section-sub" style="margin:0">${st.length} ${plural(st.length, 'етап', 'етапи', 'етапів')} · ${nTasks} ${plural(nTasks, 'пункт', 'пункти', 'пунктів')}. Зміни одразу діють для всіх клієнтів, позначений прогрес зберігається.</p></div>
+        <p class="section-sub" style="margin:0">${st.length} ${plural(st.length, 'етап', 'етапи', 'етапів')} · ${nTasks} ${plural(nTasks, 'пункт', 'пункти', 'пунктів')}. Зміни одразу діють для всіх проєктів, позначений прогрес зберігається.</p></div>
       <button class="btn" data-act="importFlow">${icon('upload', 15)}Імпорт флоу</button>
       <button class="btn primary" data-act="addStage">${icon('plus', 15)}Етап</button>
     </div>
@@ -4806,7 +4729,7 @@ function viewSetFlow() {
             <input class="inline-input" data-in="stTitle" data-sid="${s.id}" value="${esc(s.title)}" aria-label="Назва етапу" placeholder="Назва етапу">
             <input class="inline-input desc" data-in="stDesc" data-sid="${s.id}" value="${esc(s.description)}" placeholder="Короткий опис етапу (необов'язково)" aria-label="Опис етапу">
           </div>
-          ${s.optional ? '<span class="badge violet" title="Вмикається при створенні клієнта">Необов\'язковий</span>' : ''}
+          ${s.optional ? '<span class="badge violet" title="Вмикається при створенні проєкту">Необов\'язковий</span>' : ''}
           <span class="badge">${s.tasks.length}</span>
           <button class="icon-btn sm" data-act="fsStageMenu" data-sid="${s.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>
         </div>
@@ -4843,13 +4766,13 @@ function renderDrawer() {
         <button class="icon-btn" data-act="closeDrawer" aria-label="Закрити">${icon('x', 18)}</button></div>
       <div class="drawer-body">
         <div class="field"><label class="label" for="t-title">Назва пункту</label><input class="input" id="t-title" data-in="tTitle" value="${esc(t.title)}"></div>
-        <div class="field"><label class="label" for="t-desc">Інструкція</label><textarea class="textarea" id="t-desc" data-in="tDesc" rows="3" placeholder="Як саме виконати цей крок, на що звернути увагу">${esc(t.description)}</textarea><div class="hint">Видно в картці клієнта, коли розгортаєте пункт.</div></div>
+        <div class="field"><label class="label" for="t-desc">Інструкція</label><textarea class="textarea" id="t-desc" data-in="tDesc" rows="3" placeholder="Як саме виконати цей крок, на що звернути увагу">${esc(t.description)}</textarea><div class="hint">Видно на сторінці проєкту, коли розгортаєте пункт.</div></div>
         <div class="field"><label class="label" for="t-due">Рекомендований термін</label>
-          <div class="row"><input type="number" min="0" max="365" class="input" id="t-due" data-in="tDue" style="width:100px" value="${t.dueDays ?? ''}" placeholder="—"><span class="muted">днів від дати старту клієнта</span></div>
-          <div class="hint">Порожньо — без терміну. 0 — у день старту. У картці клієнта термін можна змінити.</div></div>
+          <div class="row"><input type="number" min="0" max="365" class="input" id="t-due" data-in="tDue" style="width:100px" value="${t.dueDays ?? ''}" placeholder="—"><span class="muted">днів від дати старту проєкту</span></div>
+          <div class="hint">Порожньо — без терміну. 0 — у день старту. На сторінці проєкту термін можна змінити.</div></div>
         <div style="border-top:1px solid var(--border);margin:20px 0 16px"></div>
         <div class="row" style="margin-bottom:4px"><div class="section-title" style="font-size:15px">Матеріали</div></div>
-        <p class="section-sub" style="font-size:13px">Шаблони повідомлень мовами УКР / РУС / ENG, файли й посилання для цього кроку. У картці клієнта поруч буде кнопка «Копіювати».</p>
+        <p class="section-sub" style="font-size:13px">Шаблони повідомлень мовами УКР / РУС / ENG, файли й посилання для цього кроку. На сторінці проєкту поруч буде кнопка «Копіювати».</p>
         ${t.attachments.map((a, i) => attEditHtml(a, i, t.attachments.length)).join('')}
         <div class="row wrap">
           <button class="btn soft sm" data-act="addAtt" data-kind="text">${icon('msg', 14)}Шаблон повідомлення</button>
@@ -4901,42 +4824,12 @@ function attEditHtml(a, i, n) {
     <div class="att-edit-body"><input class="input" type="url" data-in="aUrl" data-aid="${a.id}" value="${esc(a.url || '')}" placeholder="https://…" aria-label="Адреса"></div></div>`;
 }
 
-/* ---------- fields ---------- */
-function viewSetFields() {
-  const groups = [...new Set(S.settings.fields.map(f => f.group).filter(Boolean))];
-  return `
-    <div class="row wrap" style="align-items:flex-start;margin-bottom:16px">
-      <div style="flex:1;min-width:240px"><h2 class="section-title">Поля картки клієнта</h2>
-      <p class="section-sub" style="margin:0">Показуються на вкладці «Інфо» в кожного клієнта. Назва, шифр, мова комунікації й дата старту є завжди. Ключ змінної дає змогу підставляти значення поля в шаблони: <span class="code-chip">{{ключ}}</span>.</p></div>
-      <button class="btn primary" data-act="addField">${icon('plus', 15)}Поле</button>
-    </div>
-    <div class="card field-list" style="overflow:hidden">
-      <div class="fl-head"><span></span><span>Назва поля</span><span class="hide-m">Ключ змінної</span><span>Тип</span><span class="hide-m">Група</span><span></span></div>
-      <div data-sortlist="fields">
-      ${S.settings.fields.map(f => `
-        <div data-sort="field" data-id="${f.id}">
-          <div class="fl-item">
-            <span class="drag" data-drag title="Перетягніть">${icon('grip', 15)}</span>
-            <input class="input" data-in="fLabel" data-fid="${f.id}" value="${esc(f.label)}" aria-label="Назва поля">
-            <input class="input hide-m" data-in="fKey" data-fid="${f.id}" value="${esc(f.key)}" placeholder="—" style="font-family:var(--mono)" aria-label="Ключ змінної">
-            <select class="select" data-in="fType" data-fid="${f.id}" aria-label="Тип поля">${FIELD_TYPES.map(t => `<option value="${t.id}" ${f.type === t.id ? 'selected' : ''}>${t.label}</option>`).join('')}</select>
-            <input class="input hide-m" data-in="fGroup" data-fid="${f.id}" value="${esc(f.group)}" list="groups-dl" aria-label="Група">
-            <button class="icon-btn sm danger" data-act="delField" data-fid="${f.id}" aria-label="Видалити поле">${icon('trash', 15)}</button>
-          </div>
-          ${f.type === 'select' ? `<div style="padding:0 12px 10px 40px"><input class="input" data-in="fOpts" data-fid="${f.id}" value="${esc((f.options || []).join(', '))}" placeholder="Варіанти через кому, напр.: A, B+, B, C" aria-label="Варіанти списку"></div>` : ''}
-        </div>`).join('')}
-      </div>
-      ${!S.settings.fields.length ? `<div class="muted" style="padding:16px">Немає полів</div>` : ''}
-    </div>
-    <datalist id="groups-dl">${groups.map(g => `<option value="${esc(g)}">`).join('')}</datalist>`;
-}
-
 /* ---------- vars & appearance ---------- */
 function viewSetVars() {
   const theme = currentTheme();
   return `
     <h2 class="section-title">Змінні для шаблонів</h2>
-    <p class="section-sub">Пишіть у шаблоні <span class="code-chip">{{змінна}}</span>. Коли копіюєте шаблон із картки клієнта, змінна заміниться значенням. Незаповнені змінні підсвічуються жовтим.</p>
+    <p class="section-sub">Пишіть у шаблоні <span class="code-chip">{{змінна}}</span>. Коли копіюєте шаблон зі сторінки проєкту, змінна заміниться значенням. Незаповнені змінні підсвічуються жовтим.</p>
     <div class="card card-pad mb-16">
       <div class="row" style="margin-bottom:12px"><div class="card-title">Мої змінні</div><span class="sp"></span><button class="btn sm" data-act="addVar">${icon('plus', 14)}Змінна</button></div>
       <div class="kv-row" style="margin-bottom:4px"><span class="label" style="margin:0">Ключ</span><span class="label" style="margin:0">Значення</span><span></span></div>
@@ -4947,9 +4840,9 @@ function viewSetVars() {
       <div class="hint">Змінна <span class="code-chip">ам</span> — ваше ім'я для шаблонів.</div>
     </div>
     <div class="card card-pad mb-16">
-      <div class="card-title" style="margin-bottom:10px">Змінні з картки клієнта</div>
-      <div class="row wrap">${varKeys().filter(v => !S.settings.vars.some(x => x.key === v.key)).map(v => `<span class="badge outline" style="height:26px"><span style="font-family:var(--mono)">{{${esc(v.key)}}}</span><span class="muted" style="font-weight:500">${esc(v.label)}</span></span>`).join('')}</div>
-      <div class="hint">Щоб додати змінну з поля, задайте йому ключ у розділі <a href="#/settings/fields">Поля картки</a>.</div>
+      <div class="card-title" style="margin-bottom:10px">Вбудовані змінні</div>
+      <div class="row wrap">${BUILTIN_VARS.map(v => `<span class="badge outline" style="height:26px"><span style="font-family:var(--mono)">{{${esc(v.key)}}}</span><span class="muted" style="font-weight:500">${esc(v.label)}</span></span>`).join('')}</div>
+      <div class="hint">Підставляється автоматично, коли копіюєте шаблон зі сторінки проєкту.</div>
     </div>
     <div class="card card-pad">
       <div class="card-title" style="margin-bottom:10px">Вигляд</div>
@@ -4977,17 +4870,17 @@ function viewSetData() {
     <div class="grid cols-2 mb-16">
       <div class="card card-pad">
         <div class="card-title">Резервна копія</div>
-        <p class="muted" style="margin:4px 0 14px">Усе разом: флоу, поля, клієнти, нотатки, історія. Зберігайте копію раз на тиждень.</p>
+        <p class="muted" style="margin:4px 0 14px">Усе разом: флоу, проєкти, позначки й історія. Зберігайте копію раз на тиждень.</p>
         <label class="row" style="margin-bottom:12px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="bk-files" checked> Разом із файлами</label>
         <div class="row wrap"><button class="btn primary sm" data-act="exportBackup">${icon('download', 14)}Експортувати</button><button class="btn sm" data-act="importBackup">${icon('upload', 14)}Відновити з копії</button></div>
       </div>
       <div class="card card-pad">
         <div class="card-title">Флоу</div>
-        <p class="muted" style="margin:4px 0 14px">Лише етапи, пункти, шаблони, поля й змінні, без клієнтів. Зручно для чернеток і перенесення.</p>
+        <p class="muted" style="margin:4px 0 14px">Лише етапи, пункти, шаблони й змінні, без проєктів. Зручно для чернеток і перенесення.</p>
         <div class="row wrap" style="margin-top:34px"><button class="btn sm" data-act="exportFlow">${icon('download', 14)}Експортувати флоу</button><button class="btn sm" data-act="importFlow">${icon('upload', 14)}Імпортувати флоу</button></div>
       </div>
     </div>
-    ${!cloud ? `<div class="card card-pad"><div class="row"><div style="flex:1"><div class="card-title">Очистити локальні дані</div><div class="muted">Видалить усіх клієнтів, флоу й файли з цього браузера.</div></div><button class="btn sm" style="color:var(--danger)" data-act="wipeLocal">${icon('trash', 14)}Очистити</button></div></div>` : ''}
+    ${!cloud ? `<div class="card card-pad"><div class="row"><div style="flex:1"><div class="card-title">Очистити локальні дані</div><div class="muted">Видалить усі проєкти, флоу й файли з цього браузера.</div></div><button class="btn sm" style="color:var(--danger)" data-act="wipeLocal">${icon('trash', 14)}Очистити</button></div></div>` : ''}
     <p class="muted" style="font-size:12px;margin-top:18px">AM Flow ${APP_VERSION}</p>`;
 }
 
@@ -5065,7 +4958,7 @@ function findAtt(aid) {
   for (const st of S.settings.stages) for (const t of st.tasks) { const a = t.attachments.find(x => x.id === aid); if (a) return { st, t, a }; }
   return null;
 }
-const PAGE_TITLES = { '': 'Огляд', clients: 'Клієнти', settings: 'Налаштування' };
+const PAGE_TITLES = { '': 'Огляд', clients: 'Проєкти', settings: 'Налаштування' };
 
 /* ---------- render ---------- */
 let lastPath = null;
@@ -5078,15 +4971,15 @@ function render() {
   let html, title = PAGE_TITLES[r.parts[0] || ''] || '';
   if (r.parts[0] === 'c') {
     const c = S.clients.get(r.parts[1]);
-    if (!c) html = `<div class="page"><div class="card">${emptyState({ ic: 'search', title: 'Клієнта не знайдено', text: 'Можливо, його видалили на іншому пристрої.', actions: `<a class="btn primary" href="#/clients">До списку клієнтів</a>` })}</div></div>`;
+    if (!c) html = `<div class="page"><div class="card">${emptyState({ ic: 'search', title: 'Проєкт не знайдено', text: 'Можливо, його видалили на іншому пристрої.', actions: `<a class="btn primary" href="#/clients">До списку проєктів</a>` })}</div></div>`;
     else {
       if (r.q.task) {
         const st = clientStages(c).find(s => s.tasks.some(t => t.id === r.q.task));
         if (st) { S.ui.open[c.id] = S.ui.open[c.id] || {}; S.ui.open[c.id][st.id] = true; S.ui.openTask = r.q.task; S.ui.scrollTo = 'task-' + r.q.task; }
         history.replaceState(null, '', `#/c/${c.id}`);
       }
-      html = viewClient(c, r.parts[2] || 'process', r.q);
-      title = c.name;
+      html = viewClient(c, r.parts[2] === 'history' ? 'history' : 'process', r.q);
+      title = pname(c);
     }
   } else if (r.parts[0] === 'clients') html = viewClients();
   else if (r.parts[0] === 'settings') html = viewSettings(r.parts[1]);
@@ -5153,28 +5046,29 @@ window.addEventListener('hashchange', () => {
 
 /* ---------- client modals ---------- */
 function clientFormBody(c) {
-  const d = c || { name: '', code: '', lang: 'uk', status: 'onboarding', startDate: todayISO(), color: PALETTE[0] };
+  const d = c || { code: '', lang: 'uk', status: 'onboarding', startDate: todayISO() };
   const optStages = S.settings.stages.filter(s => s.optional);
   return `
-    <div class="field"><label class="label" for="cf-name">Назва клієнта</label><input class="input" id="cf-name" name="name" value="${esc(d.name)}" placeholder="Назва компанії клієнта" autocomplete="off"></div>
     <div class="field-row">
       <div class="field"><label class="label" for="cf-code">Шифр проєкту</label><input class="input" id="cf-code" name="code" value="${esc(d.code)}" placeholder="Напр. ABC" style="font-family:var(--mono);text-transform:uppercase" autocomplete="off"></div>
       <div class="field"><label class="label" for="cf-start">Дата старту</label><input type="date" class="input" id="cf-start" name="startDate" value="${esc(d.startDate)}"></div>
     </div>
     <div class="field"><span class="label">Мова комунікації</span>
       <div class="seg" data-name="lang">${LANGS.map(l => `<button type="button" class="${d.lang === l.id ? 'on' : ''}" data-v="${l.id}">${l.name}</button>`).join('')}</div>
-      <div class="hint">Шаблони повідомлень у картці відкриватимуться цією мовою. Від дати старту рахуються рекомендовані терміни.</div></div>
-    <div class="field-row">
-      <div class="field"><label class="label" for="cf-status">Статус</label><select class="select" id="cf-status" name="status">${STATUSES.map(s => `<option value="${s.id}" ${d.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
-      <div class="field"><span class="label">Колір</span><div class="seg" data-name="color" style="padding:4px;gap:4px">${PALETTE.map(col => `<button type="button" class="${d.color === col ? 'on' : ''}" data-v="${col}" aria-label="Колір ${col}" style="padding:3px"><span style="display:block;width:16px;height:16px;border-radius:5px;background:${col}"></span></button>`).join('')}</div></div>
-    </div>
+      <div class="hint">Шаблони повідомлень відкриватимуться цією мовою. Від дати старту рахуються рекомендовані терміни.</div></div>
+    <div class="field"><label class="label" for="cf-status">Статус</label><select class="select" id="cf-status" name="status">${STATUSES.map(s => `<option value="${s.id}" ${d.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
     ${!c && optStages.length ? `<div class="field"><span class="label">Необов'язкові етапи</span>
       ${optStages.map(s => `<label class="row" style="padding:5px 0;cursor:pointer;font-size:13.5px;align-items:flex-start"><input type="checkbox" name="opt_${s.id}" style="margin-top:3px"><span><b style="font-weight:600">${esc(s.title)}</b>${s.description ? `<br><span class="muted" style="font-size:12.5px">${esc(s.description)}</span>` : ''}</span></label>`).join('')}
-      <div class="hint">Не позначені етапи буде пропущено. Повернути їх можна в картці клієнта: ⋯ біля етапу → «Повернути пропущені».</div></div>` : ''}`;
+      <div class="hint">Не позначені етапи буде пропущено. Повернути їх можна на сторінці проєкту: ⋯ біля етапу → «Повернути пропущені».</div></div>` : ''}`;
 }
-const requireName = (data, wrap) => {
-  if (data.name && data.name.trim()) return false;
-  const i = $('[name=name]', wrap); i.style.borderColor = 'var(--danger)'; i.focus(); i.placeholder = 'Вкажіть назву клієнта'; return true;
+const requireCode = (data, wrap) => {
+  const v = (data.code || '').trim().toUpperCase();
+  const i = $('[name=code]', wrap);
+  let err = !v ? 'Вкажіть шифр проєкту' : null;
+  const cur = curClient();
+  if (!err && [...S.clients.values()].some(x => x.code === v && (!cur || x.id !== cur.id || !$('.modal h3', wrap).textContent.startsWith('Редагувати')))) err = `Проєкт ${v} уже є`;
+  if (!err) return false;
+  i.style.borderColor = 'var(--danger)'; i.focus(); i.value = ''; i.placeholder = err; return true;
 };
 
 /* ---------- actions ---------- */
@@ -5189,27 +5083,27 @@ const ACTIONS = {
 
   async newClient() {
     const data = await openModal({
-      title: 'Новий клієнт', body: clientFormBody(null),
-      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Створити клієнта', cls: 'primary', value: 'form', validate: requireName }],
+      title: 'Новий проєкт', body: clientFormBody(null),
+      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Створити проєкт', cls: 'primary', value: 'form', validate: requireCode }],
     });
     if (!data) return;
     const c = newClient(data);
     S.settings.stages.filter(s => s.optional && !data['opt_' + s.id]).forEach(s => s.tasks.forEach(t => { c.progress[t.id] = { skipped: true }; }));
     S.clients.set(c.id, c); S.store.saveClient(clone(c));
-    toast(`Клієнта «${c.name}» створено`);
+    toast(`Проєкт ${c.code} створено`);
     go(`#/c/${c.id}`);
   },
   async editClient() {
     const c = curClient(); if (!c) return;
     const data = await openModal({
-      title: 'Редагувати клієнта', body: clientFormBody(c),
-      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form', validate: requireName }],
+      title: 'Редагувати проєкт', body: clientFormBody(c),
+      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form', validate: requireCode }],
     });
     if (!data) return;
     const prevStatus = c.status;
     updateClient(c.id, x => {
-      x.name = data.name.trim(); x.code = (data.code || '').trim().toUpperCase(); x.lang = data.lang || x.lang;
-      x.startDate = data.startDate || x.startDate; x.status = data.status; if (data.color) x.color = data.color;
+      x.code = x.name = (data.code || '').trim().toUpperCase(); x.lang = data.lang || x.lang;
+      x.startDate = data.startDate || x.startDate; x.status = data.status;
     }, { log: prevStatus !== data.status ? { type: 'status', text: `Статус: ${statusOf(prevStatus).label} → ${statusOf(data.status).label}` } : null });
     toast('Зміни збережено');
   },
@@ -5217,14 +5111,14 @@ const ACTIONS = {
     const c = curClient(); if (!c) return;
     showMenu(el, [
       { label: 'Редагувати', icon: 'edit', fn: ACTIONS.editClient },
-      { label: 'Копіювати шифр', icon: 'copy', fn: async () => { await copyText(c.code || c.name); toast('Скопійовано'); } },
+      { label: 'Копіювати шифр', icon: 'copy', fn: async () => { await copyText(pname(c)); toast('Скопійовано'); } },
       '-',
-      { label: 'Видалити клієнта', icon: 'trash', danger: true, fn: async () => {
-        const ok = await confirmDialog({ title: `Видалити клієнта «${c.name}»?`, text: 'Буде видалено картку, прогрес, нотатки, історію й файли клієнта. Цю дію не можна скасувати. Якщо співпраця просто завершилась, краще змініть статус на «Завершено».', confirm: 'Видалити назавжди' });
+      { label: 'Видалити проєкт', icon: 'trash', danger: true, fn: async () => {
+        const ok = await confirmDialog({ title: `Видалити проєкт ${esc(pname(c))}?`, text: 'Буде видалено проєкт, позначки воронки й історію. Цю дію не можна скасувати. Якщо співпраця просто завершилась, краще змініть статус на «Завершено».', confirm: 'Видалити назавжди' });
         if (!ok) return;
         c.files.forEach(f => S.store.deleteFile(f.id));
         S.clients.delete(c.id); S.store.deleteClient(c.id);
-        toast(`Клієнта «${c.name}» видалено`); go('#/clients');
+        toast(`Проєкт ${pname(c)} видалено`); go('#/clients');
       } },
     ]);
   },
@@ -5270,11 +5164,11 @@ const ACTIONS = {
     showMenu(el, [
       p.skipped
         ? { label: 'Повернути пункт', icon: 'undo', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: false }; }, { log: { type: 'unskip', text: `Повернуто пункт: «${title}»` } }) }
-        : { label: 'Не потрібно для цього клієнта', icon: 'ban', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: true, done: false }; delete x.progress[tid].doneAt; }, { log: { type: 'skip', text: `Не потрібно: «${title}»` } }) },
+        : { label: 'Не потрібно для цього проєкту', icon: 'ban', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: true, done: false }; delete x.progress[tid].doneAt; }, { log: { type: 'skip', text: `Не потрібно: «${title}»` } }) },
       custom ? { label: 'Редагувати пункт', icon: 'edit', fn: () => editCustomTask(c, custom) } : { label: 'Редагувати у флоу', icon: 'sliders', fn: () => { S.ui.settingsTask = tid; go('#/settings/flow'); } },
       custom ? '-' : null,
       custom ? { label: 'Видалити пункт', icon: 'trash', danger: true, fn: async () => {
-        if (!await confirmDialog({ title: 'Видалити пункт?', text: `«${esc(custom.title)}» буде видалено з картки цього клієнта.`, confirm: 'Видалити' })) return;
+        if (!await confirmDialog({ title: 'Видалити пункт?', text: `«${esc(custom.title)}» буде видалено з цього проєкту.`, confirm: 'Видалити' })) return;
         updateClient(c.id, x => { x.customTasks = x.customTasks.filter(t => t.id !== tid); delete x.progress[tid]; }, { log: { type: 'customDel', text: `Видалено пункт «${custom.title}»` } });
       } } : null,
     ]);
@@ -5286,15 +5180,15 @@ const ACTIONS = {
     const skipped = st.tasks.filter(t => taskState(c, t.id).skipped);
     showMenu(el, [
       open.length ? { label: 'Позначити все виконаним', icon: 'checkCircle', fn: async () => {
-        if (!await confirmDialog({ title: 'Позначити весь етап виконаним?', text: `${open.length} ${plural(open.length, 'пункт', 'пункти', 'пунктів')} етапу «${esc(st.title)}» буде позначено виконаними сьогоднішньою датою. Зручно для клієнтів, які вже давно в роботі.`, confirm: 'Позначити', tone: 'primary', ic: 'checkCircle' })) return;
+        if (!await confirmDialog({ title: 'Позначити весь етап виконаним?', text: `${open.length} ${plural(open.length, 'пункт', 'пункти', 'пунктів')} етапу «${esc(st.title)}» буде позначено виконаними сьогоднішньою датою. Зручно для проєктів, які вже давно в роботі.`, confirm: 'Позначити', tone: 'primary', ic: 'checkCircle' })) return;
         updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), done: true, doneAt: Date.now() }; }); }, { log: { type: 'stage', text: `Етап «${st.title}» позначено виконаним` } });
       } } : null,
-      open.length ? { label: 'Пропустити етап для клієнта', icon: 'ban', fn: async () => {
+      open.length ? { label: 'Пропустити етап для проєкту', icon: 'ban', fn: async () => {
         if (!await confirmDialog({ title: 'Пропустити етап?', text: `${open.length} ${plural(open.length, 'невиконаний пункт', 'невиконані пункти', 'невиконаних пунктів')} етапу «${esc(st.title)}» буде позначено як «Не потрібно» і не враховуватиметься в прогресі.`, confirm: 'Пропустити', tone: 'amber', ic: 'ban' })) return;
         updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: true }; }); }, { log: { type: 'skip', text: `Етап «${st.title}» пропущено` } });
       } } : null,
       skipped.length ? { label: `Повернути пропущені (${skipped.length})`, icon: 'undo', fn: () => updateClient(c.id, x => { skipped.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: false }; }); }, { log: { type: 'unskip', text: `Повернуто пропущені пункти етапу «${st.title}»` } }) } : null,
-      { label: 'Додати пункт для клієнта', icon: 'plus', fn: () => ACTIONS.addCustomTask({ dataset: { sid: st.id } }) },
+      { label: 'Додати пункт для проєкту', icon: 'plus', fn: () => ACTIONS.addCustomTask({ dataset: { sid: st.id } }) },
       '-',
       { label: 'Редагувати етап у флоу', icon: 'sliders', fn: () => go('#/settings/flow') },
     ]);
@@ -5303,7 +5197,7 @@ const ACTIONS = {
     const c = curClient(); if (!c) return;
     const st = S.settings.stages.find(s => s.id === el.dataset.sid);
     const data = await openModal({
-      title: 'Пункт лише для цього клієнта', text: st ? `Етап «${esc(st.title)}». У флоу й в інших клієнтів він не з'явиться.` : '',
+      title: 'Пункт лише для цього проєкту', text: st ? `Етап «${esc(st.title)}». У флоу й в інших проєктах він не з'явиться.` : '',
       body: `<div class="field"><label class="label" for="ct-t">Назва пункту</label><input class="input" id="ct-t" name="title" placeholder="Що потрібно зробити"></div>
              <div class="field"><label class="label" for="ct-d">Опис</label><textarea class="textarea" id="ct-d" name="description" rows="3" placeholder="Необов'язково"></textarea></div>`,
       actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Додати', cls: 'primary', value: 'form', validate: (d, w) => { if (d.title.trim()) return false; $('[name=title]', w).focus(); return true; } }],
@@ -5333,33 +5227,6 @@ const ACTIONS = {
     updateClient(c.id, x => { if (x.progress[tid]) delete x.progress[tid].due; }, { log: { type: 'due', text: `Термін «${title}» повернуто до рекомендованого` } });
   },
 
-  addNote() {
-    const c = curClient(); const ta = $('#note-new'); if (!c || !ta) return;
-    const text = ta.value.trim(); if (!text) { ta.focus(); return; }
-    updateClient(c.id, x => x.notes.push({ id: uid('n_'), text, createdAt: Date.now() }), { log: { type: 'note', text: 'Додано нотатку' } });
-    toast('Нотатку додано');
-  },
-  async editNote(el) {
-    const c = curClient(); const n = c && c.notes.find(x => x.id === el.dataset.nid); if (!n) return;
-    const data = await openModal({ title: 'Редагувати нотатку', wide: true, body: `<textarea class="textarea" name="text" rows="8">${esc(n.text)}</textarea>`, actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form' }] });
-    if (!data || !data.text.trim()) return;
-    updateClient(c.id, x => { const m = x.notes.find(y => y.id === n.id); m.text = data.text.trim(); m.updatedAt = Date.now(); });
-  },
-  delNote(el) {
-    const c = curClient(); if (!c) return;
-    const idx = c.notes.findIndex(x => x.id === el.dataset.nid); if (idx < 0) return;
-    const removed = c.notes[idx];
-    updateClient(c.id, x => x.notes.splice(idx, 1));
-    toast('Нотатку видалено', { action: { label: 'Повернути', fn: () => updateClient(c.id, x => x.notes.push(removed)) } });
-  },
-  async uploadClientFile() { const files = await pickFile('', true); if (files && files.length) uploadClientFiles(files); },
-  async delClientFile(el) {
-    const c = curClient(); const f = c && c.files.find(x => x.id === el.dataset.fid); if (!f) return;
-    if (!await confirmDialog({ title: 'Видалити файл?', text: `«${esc(f.name)}» буде видалено без можливості відновлення.`, confirm: 'Видалити' })) return;
-    S.store.deleteFile(f.id);
-    updateClient(c.id, x => { x.files = x.files.filter(y => y.id !== f.id); }, { log: { type: 'fileDel', text: `Видалено файл «${f.name}»` } });
-  },
-
   /* settings: flow */
   addStage() {
     const id = uid('s_');
@@ -5370,14 +5237,14 @@ const ACTIONS = {
     const sid = el.dataset.sid, idx = S.settings.stages.findIndex(s => s.id === sid), st = S.settings.stages[idx];
     showMenu(el, [
       { label: 'Додати пункт', icon: 'plus', fn: () => ACTIONS.addTask({ dataset: { sid } }) },
-      { label: st.optional ? 'Зробити обов\'язковим' : 'Зробити необов\'язковим', icon: 'ban', fn: () => { const was = st.optional; updateSettings(s => { s.stages.find(x => x.id === sid).optional = !was; }); toast(was ? 'Етап тепер обов\'язковий' : 'Етап необов\'язковий: вмикається галочкою при створенні клієнта'); } },
+      { label: st.optional ? 'Зробити обов\'язковим' : 'Зробити необов\'язковим', icon: 'ban', fn: () => { const was = st.optional; updateSettings(s => { s.stages.find(x => x.id === sid).optional = !was; }); toast(was ? 'Етап тепер обов\'язковий' : 'Етап необов\'язковий: вмикається галочкою при створенні проєкту'); } },
       idx > 0 ? { label: 'Перемістити вище', icon: 'arrowUp', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx - 1, 0, x); }) } : null,
       idx < S.settings.stages.length - 1 ? { label: 'Перемістити нижче', icon: 'arrowDown', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx + 1, 0, x); }) } : null,
       '-',
       { label: 'Видалити етап', icon: 'trash', danger: true, fn: async () => {
         const ids = new Set(st.tasks.map(t => t.id));
         const touched = [...S.clients.values()].filter(c => Object.keys(c.progress).some(k => ids.has(k) && (c.progress[k].done || c.progress[k].skipped))).length;
-        if (!await confirmDialog({ title: `Видалити етап «${st.title}»?`, text: `Етап і ${st.tasks.length} ${plural(st.tasks.length, 'пункт', 'пункти', 'пунктів')} з матеріалами зникнуть у всіх клієнтів${touched ? `. У ${touched} ${plural(touched, 'клієнта', 'клієнтів', 'клієнтів')} тут уже є позначки` : ''}.`, confirm: 'Видалити етап' })) return;
+        if (!await confirmDialog({ title: `Видалити етап «${st.title}»?`, text: `Етап і ${st.tasks.length} ${plural(st.tasks.length, 'пункт', 'пункти', 'пунктів')} з матеріалами зникнуть у всіх проєктах${touched ? `. У ${touched} ${plural(touched, 'проєкті', 'проєктах', 'проєктах')} тут уже є позначки` : ''}.`, confirm: 'Видалити етап' })) return;
         st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && S.store.deleteFile(a.fileId)));
         updateSettings(s => { s.stages = s.stages.filter(x => x.id !== sid); });
         toast('Етап видалено');
@@ -5430,7 +5297,7 @@ const ACTIONS = {
     const f = findTask(S.ui.settingsTask); if (!f) return;
     const a = f.t.attachments.find(x => x.id === el.dataset.aid); if (!a) return;
     const hasContent = a.kind === 'file' || (a.kind === 'text' && Object.values(a.texts).some(Boolean));
-    if (hasContent && !await confirmDialog({ title: a.kind === 'file' ? 'Видалити файл?' : 'Видалити шаблон?', text: `«${esc(a.title || a.name)}» зникне з цього пункту в усіх клієнтів.`, confirm: 'Видалити' })) return;
+    if (hasContent && !await confirmDialog({ title: a.kind === 'file' ? 'Видалити файл?' : 'Видалити шаблон?', text: `«${esc(a.title || a.name)}» зникне з цього пункту в усіх проєктах.`, confirm: 'Видалити' })) return;
     if (a.kind === 'file') S.store.deleteFile(a.fileId);
     updateSettings(() => { f.t.attachments = f.t.attachments.filter(x => x.id !== a.id); }, { render: false });
     renderDrawer();
@@ -5450,24 +5317,13 @@ const ACTIONS = {
   async delTask() {
     const f = findTask(S.ui.settingsTask); if (!f) return;
     const touched = [...S.clients.values()].filter(c => c.progress[f.t.id] && (c.progress[f.t.id].done || c.progress[f.t.id].skipped)).length;
-    if (!await confirmDialog({ title: `Видалити пункт «${f.t.title}»?`, text: `Пункт і його матеріали зникнуть у всіх клієнтів${touched ? `; у ${touched} ${plural(touched, 'клієнта', 'клієнтів', 'клієнтів')} він уже позначений` : ''}.`, confirm: 'Видалити пункт' })) return;
+    if (!await confirmDialog({ title: `Видалити пункт «${f.t.title}»?`, text: `Пункт і його матеріали зникнуть у всіх проєктах${touched ? `; у ${touched} ${plural(touched, 'проєкті', 'проєктах', 'проєктах')} він уже позначений` : ''}.`, confirm: 'Видалити пункт' })) return;
     f.t.attachments.forEach(a => a.kind === 'file' && S.store.deleteFile(a.fileId));
     updateSettings(() => { f.st.tasks = f.st.tasks.filter(t => t.id !== f.t.id); }, { render: false });
     closeDrawer(); toast('Пункт видалено');
   },
 
-  /* settings: fields & vars */
-  addField() {
-    const id = uid('f_'), last = S.settings.fields[S.settings.fields.length - 1];
-    updateSettings(s => s.fields.push({ id, label: 'Нове поле', key: '', type: 'text', group: last ? last.group : 'Основне' }));
-    const inp = $(`[data-in=fLabel][data-fid="${id}"]`); if (inp) { inp.focus(); inp.select(); }
-  },
-  async delField(el) {
-    const f = S.settings.fields.find(x => x.id === el.dataset.fid); if (!f) return;
-    const used = [...S.clients.values()].filter(c => c.fields[f.id]).length;
-    if (used && !await confirmDialog({ title: `Видалити поле «${f.label}»?`, text: `Поле заповнене у ${used} ${plural(used, 'клієнта', 'клієнтів', 'клієнтів')}. Значення зникнуть із карток.`, confirm: 'Видалити поле' })) return;
-    updateSettings(s => { s.fields = s.fields.filter(x => x.id !== f.id); });
-  },
+  /* settings: vars */
   addVar() { updateSettings(s => s.vars.push({ key: '', value: '' })); const ins = $$('[data-in=vKey]'); ins.length && ins[ins.length - 1].focus(); },
   delVar(el) { updateSettings(s => s.vars.splice(+el.dataset.i, 1)); },
 
@@ -5477,11 +5333,11 @@ const ACTIONS = {
   exportFlow: () => exportFlow(),
   importFlow: () => importFromFile('flow'),
   async wipeLocal() {
-    if (!await confirmDialog({ title: 'Очистити всі локальні дані?', text: 'Буде видалено всіх клієнтів, флоу, нотатки й файли з цього браузера. Перед цим варто експортувати резервну копію.', confirm: 'Очистити' })) return;
+    if (!await confirmDialog({ title: 'Очистити всі локальні дані?', text: 'Буде видалено всі проєкти, флоу й файли з цього браузера. Перед цим варто експортувати резервну копію.', confirm: 'Очистити' })) return;
     await S.store.wipe(); location.hash = ''; location.reload();
   },
   async switchToCloud() {
-    const ok = await confirmDialog({ title: 'Перейти на Firebase?', text: 'Спершу експортуйте резервну копію (Дані → Експортувати). Після входу в Firebase відновіть її, і всі клієнти перенесуться в хмару. Локальні дані залишаться в цьому браузері.', confirm: 'Продовжити', tone: 'primary', ic: 'cloud' });
+    const ok = await confirmDialog({ title: 'Перейти на Firebase?', text: 'Спершу експортуйте резервну копію (Дані → Експортувати). Після входу в Firebase відновіть її, і всі проєкти перенесуться в хмару. Локальні дані залишаться в цьому браузері.', confirm: 'Продовжити', tone: 'primary', ic: 'cloud' });
     if (!ok) return;
     showCloudSetup(true);
   },
@@ -5489,10 +5345,6 @@ const ACTIONS = {
 
 const INPUTS = {
   search: el => { S.ui.q = el.value; render(); },
-  cfield: el => { const c = curClient(); c && updateClient(c.id, x => { x.fields[el.dataset.fid] = el.value; }, { render: false }); },
-  cname: el => { const c = curClient(); if (!c) return; updateClient(c.id, x => { x.name = el.value; }, { render: false }); const h = $('.client-head h1'); if (h && h.firstChild) h.firstChild.textContent = el.value + ' '; renderSidebar(parseRoute()); },
-  ccode: el => { const c = curClient(); c && updateClient(c.id, x => { x.code = el.value.toUpperCase(); }, { render: false }); },
-  taskNote: el => { const c = curClient(); c && updateClient(c.id, x => { x.progress[el.dataset.tid] = { ...(x.progress[el.dataset.tid] || {}), note: el.value }; }, { render: false }); },
   stTitle: el => updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); if (st) st.title = el.value; }, { render: false }),
   stDesc: el => updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); if (st) st.description = el.value; }, { render: false }),
   tTitle: el => { const f = findTask(S.ui.settingsTask); if (!f) return; updateSettings(() => { f.t.title = el.value; }, { render: false }); const row = $(`.fs-task[data-id="${f.t.id}"] .tt`); if (row) row.textContent = el.value; },
@@ -5501,49 +5353,20 @@ const INPUTS = {
   aTitle: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.title = el.value; }, { render: false }); },
   aText: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.texts[el.dataset.lang] = el.value; }, { render: false }); },
   aUrl: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.url = el.value.trim(); }, { render: false }); },
-  fLabel: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.label = el.value; }, { render: false }),
-  fKey: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.key = slugKey(el.value); }, { render: false }),
-  fGroup: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.group = el.value.trim() || 'Основне'; }, { render: false }),
-  fOpts: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) f.options = el.value.split(',').map(x => x.trim()).filter(Boolean); }, { render: false }),
   vKey: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.key = slugKey(el.value); }, { render: false }),
   vVal: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.value = el.value; }, { render: false }),
 };
 const CHANGES = {
   sort: el => { S.ui.sort = el.value; saveUi(); render(); },
-  cfield: el => {
-    const c = curClient(); if (!c) return;
-    const f = S.settings.fields.find(x => x.id === el.dataset.fid); const prev = el.dataset.prev || '', val = el.value;
-    if (prev === val) return;
-    el.dataset.prev = val;
-    const short = s => s.length > 40 ? s.slice(0, 40) + '…' : s;
-    updateClient(c.id, x => { x.fields[el.dataset.fid] = val; }, { render: el.tagName === 'SELECT' || el.type === 'date' || el.type === 'url', log: { type: 'field', text: `«${f ? f.label : 'Поле'}»: ${prev && prev.length < 40 && val.length < 40 ? `${short(prev)} → ${short(val) || '—'}` : val ? short(val) : 'очищено'}` } });
-  },
-  cname: el => { const c = curClient(); if (!c) return; const v = el.value.trim() || el.dataset.prev; if (v === el.dataset.prev) return; el.dataset.prev = v; updateClient(c.id, x => { x.name = v; }, { render: false, log: { type: 'field', text: `Назва: ${v}` } }); },
-  ccode: el => { const c = curClient(); if (!c) return; const v = el.value.trim().toUpperCase(); if (v === el.dataset.prev) return; el.dataset.prev = v; updateClient(c.id, x => { x.code = v; }, { render: false, log: { type: 'field', text: `Шифр: ${v || '—'}` } }); },
-  clang: el => { const c = curClient(); c && updateClient(c.id, x => { x.lang = el.value; }, { log: { type: 'field', text: `Мова комунікації: ${langOf(el.value).name}` } }); },
-  cstart: el => { const c = curClient(); c && el.value && updateClient(c.id, x => { x.startDate = el.value; }, { log: { type: 'field', text: `Дата старту: ${fmtDate(el.value)}` } }); },
   cstatus: el => { const c = curClient(); if (!c) return; const prev = c.status; updateClient(c.id, x => { x.status = el.value; }, { log: { type: 'status', text: `Статус: ${statusOf(prev).label} → ${statusOf(el.value).label}` } }); },
   taskDue: el => {
     const c = curClient(); if (!c) return; const tid = el.dataset.tid, title = taskTitle(c, tid);
     updateClient(c.id, x => { const q = x.progress[tid] = { ...(x.progress[tid] || {}) }; if (el.value) q.due = el.value; else delete q.due; },
       { log: { type: 'due', text: el.value ? `Термін «${title}»: ${fmtDate(el.value)}` : `Термін «${title}» прибрано` } });
   },
-  fType: el => updateSettings(s => { const f = s.fields.find(x => x.id === el.dataset.fid); if (f) { f.type = el.value; if (f.type === 'select' && !f.options) f.options = []; } }),
   tDue: () => { const row = S.ui.settingsTask; row && render(); },
 };
 
-async function uploadClientFiles(files) {
-  const c = curClient(); if (!c) return;
-  for (const file of files) {
-    if (file.size > MAX_FILE) { toast(`«${file.name}» завеликий: максимум ${fmtSize(MAX_FILE)}`, { error: true }); continue; }
-    try {
-      toast(`Завантажую «${file.name}»…`, { ms: 2000 });
-      const meta = await S.store.uploadFile(file, file.name, file.type);
-      updateClient(c.id, x => x.files.push({ id: meta.id, name: meta.name, size: meta.size, type: meta.type, createdAt: meta.createdAt }), { log: { type: 'file', text: `Додано файл «${meta.name}»` } });
-      toast('Файл додано');
-    } catch (e) { toast('Не вдалося завантажити: ' + e.message, { error: true }); }
-  }
-}
 async function editCustomTask(c, t) {
   const data = await openModal({
     title: 'Редагувати пункт',
@@ -5567,7 +5390,6 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-act]:not(button)') && !e.target.closest('.modal-wrap')) { e.preventDefault(); e.target.click(); return; }
-  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && e.target.id === 'note-new') { e.preventDefault(); ACTIONS.addNote(); return; }
   if (e.key === 'Escape' && !modalStack.length && !openMenuEl) {
     if ($('#drawer')) closeDrawer();
     else if ($('#app.nav-open')) $('#app').classList.remove('nav-open');
@@ -5575,16 +5397,6 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('input', e => { const el = e.target.closest && e.target.closest('[data-in]'); if (el && INPUTS[el.dataset.in]) INPUTS[el.dataset.in](el, e); });
 document.addEventListener('change', e => { const el = e.target.closest && e.target.closest('[data-in]'); if (el && CHANGES[el.dataset.in]) CHANGES[el.dataset.in](el, e); });
-document.addEventListener('dragover', e => {
-  const dz = e.target.closest && e.target.closest('[data-drop]');
-  if (dz && e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); dz.classList.add('over'); }
-});
-document.addEventListener('dragleave', e => { const dz = e.target.closest && e.target.closest('[data-drop]'); if (dz) dz.classList.remove('over'); });
-document.addEventListener('drop', e => {
-  const dz = e.target.closest && e.target.closest('[data-drop]');
-  if (dz && e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); dz.classList.remove('over'); uploadClientFiles([...e.dataTransfer.files]); }
-});
-
 /* ---------- backup / flow import-export ---------- */
 function fileNameById(id) {
   for (const st of S.settings.stages) for (const t of st.tasks) for (const a of t.attachments) if (a.kind === 'file' && a.fileId === id) return a.name;
@@ -5631,7 +5443,7 @@ async function importFlowData(data, fname) {
   const n = (data.stages || []).reduce((a, s) => a + (s.tasks || []).length, 0);
   const ok = await confirmDialog({
     title: 'Імпортувати флоу?', ic: 'upload', tone: 'primary', confirm: 'Імпортувати',
-    text: `«${esc(fname)}»: ${(data.stages || []).length} ${plural((data.stages || []).length, 'етап', 'етапи', 'етапів')}, ${n} ${plural(n, 'пункт', 'пункти', 'пунктів')}, ${(data.fields || []).length} полів. Поточні етапи, шаблони й поля буде замінено. Позначки клієнтів збережуться для пунктів, які є в обох версіях.`,
+    text: `«${esc(fname)}»: ${(data.stages || []).length} ${plural((data.stages || []).length, 'етап', 'етапи', 'етапів')}, ${n} ${plural(n, 'пункт', 'пункти', 'пунктів')}. Поточні етапи й шаблони буде замінено. Позначки в проєктах збережуться для пунктів, які є в обох версіях.`,
   });
   if (!ok) return;
   const oldFiles = new Set(); S.settings.stages.forEach(st => st.tasks.forEach(t => t.attachments.forEach(a => a.kind === 'file' && oldFiles.add(a.fileId))));
@@ -5648,7 +5460,7 @@ async function importBackupData(data) {
   const cnt = (data.clients || []).length;
   const ok = await confirmDialog({
     title: 'Відновити з резервної копії?', confirm: 'Замінити все', ic: 'refresh', tone: 'danger',
-    text: `Копія від ${data.exportedAt ? fmtTsFull(Date.parse(data.exportedAt)) : '—'}: ${cnt} ${plural(cnt, 'клієнт', 'клієнти', 'клієнтів')}. Поточні дані (${S.clients.size} ${plural(S.clients.size, 'клієнт', 'клієнти', 'клієнтів')}, флоу й поля) буде замінено вмістом копії.`,
+    text: `Копія від ${data.exportedAt ? fmtTsFull(Date.parse(data.exportedAt)) : '—'}: ${cnt} ${plural(cnt, 'проєкт', 'проєкти', 'проєктів')}. Поточні дані (${S.clients.size} ${plural(S.clients.size, 'проєкт', 'проєкти', 'проєктів')} і флоу) буде замінено вмістом копії.`,
   });
   if (!ok) return;
   toast('Відновлюю дані…', { ms: 2500 });
@@ -5660,7 +5472,7 @@ async function importBackupData(data) {
   (data.clients || []).forEach(raw => { const c = normalizeClient(clone(raw)); c.updatedAt = now; S.clients.set(c.id, c); S.store.saveClient(clone(c)); });
   const restored = await restoreFiles(data.files);
   render();
-  toast(`Відновлено: ${cnt} ${plural(cnt, 'клієнт', 'клієнти', 'клієнтів')}${restored ? `, файлів: ${restored}` : ''}`);
+  toast(`Відновлено: ${cnt} ${plural(cnt, 'проєкт', 'проєкти', 'проєктів')}${restored ? `, файлів: ${restored}` : ''}`);
 }
 
 /* ============ AM Flow — boot & auth ============ */
