@@ -455,7 +455,7 @@ textarea.inline-input.auto { resize: none; overflow: hidden; min-height: 34px; }
 .att-head { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .att-head .t { flex: 1; font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 8px; min-width: 140px; }
 .att-head .t svg { color: var(--primary-text); }
-.att-text { padding: 12px 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; max-height: 320px; overflow: auto; }
+.att-text { padding: 12px 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6; overflow-wrap: anywhere; }
 .att-text .var { background: var(--warning-soft); color: var(--warning); border-radius: 4px; padding: 0 3px; font-family: var(--mono); font-size: 12.5px; }
 .att-text .var.ok { background: var(--primary-soft); color: var(--primary-text); font-family: inherit; font-size: inherit; }
 .att-text.empty-lang { color: var(--text-3); font-style: italic; }
@@ -683,6 +683,26 @@ textarea.inline-input.auto { resize: none; overflow: hidden; min-height: 34px; }
 .task.done .task-note { opacity: .8; }
 .task-row:not([data-act]):hover { background: transparent; }
 .task.open .task-body { padding-top: 2px; }
+
+/* step drawer — compact */
+.field.tight { margin-bottom: 4px; }
+.link-btn { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; padding: 4px 2px; margin: 0 0 4px; font: inherit; font-size: 12.5px; font-weight: 500; color: var(--text-3); cursor: pointer; border-radius: 6px; }
+.link-btn:hover { color: var(--primary-text); }
+.link-btn:focus-visible { outline: none; box-shadow: var(--focus); }
+.textarea.auto-grow { resize: none; overflow: hidden; min-height: 0; }
+.dr-sep { border-top: 1px solid var(--border); margin: 18px 0 14px; }
+.dr-sub { font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+.att-acts { display: inline-flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+.att-edit:hover .att-acts, .att-edit:focus-within .att-acts { opacity: 1; }
+@media (hover: none) { .att-acts { opacity: 1; } }
+.icon-btn.copy { color: var(--primary-text); }
+.icon-btn.copy:hover:not(:disabled) { background: var(--primary-soft); color: var(--primary-text); }
+.icon-btn:disabled { opacity: .4; cursor: not-allowed; }
+.att-edit.tpl { transition: border-color .15s, box-shadow .15s; }
+.att-edit.tpl:focus-within { border-color: var(--primary); box-shadow: var(--focus); }
+.tpl-bar { display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 8px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.tpl-text { display: block; width: 100%; box-sizing: border-box; border: 0; outline: none; background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.6; padding: 12px 14px; min-height: 120px; resize: none; overflow: hidden; }
+.tpl-text::placeholder { color: var(--text-3); }
 
 </style>
 </head>
@@ -4609,9 +4629,9 @@ function attViewHtml(a, c) {
     const txt = a.texts[lang] || '';
     return `<div class="att">
       <div class="att-head">
-        <div class="t">${icon('msg', 15)}${esc(a.title || 'Шаблон повідомлення')}</div>
         <div class="seg" aria-label="Мова шаблону">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="attLang" data-aid="${a.id}" data-lang="${l.id}" ${a.texts[l.id] ? '' : 'disabled title="Немає перекладу"'}>${l.short}</button>`).join('')}</div>
-        <button class="btn soft sm" data-act="copyAtt" data-aid="${a.id}" data-lang="${lang}" ${txt ? '' : 'disabled'}>${icon('copy', 14)}Копіювати</button>
+        <span class="sp"></span>
+        <button class="icon-btn sm copy" data-act="copyAtt" data-aid="${a.id}" data-lang="${lang}" aria-label="Копіювати" title="Копіювати" ${txt ? '' : 'disabled'}>${icon('copy', 15)}</button>
       </div>
       <div class="att-text ${txt ? '' : 'empty-lang'}">${txt ? textHtml(txt) : 'Текст для цієї мови ще не додано'}</div>
     </div>`;
@@ -4761,23 +4781,25 @@ function renderDrawer() {
   const { st, t } = found;
   const keepScroll = wrap ? $('.drawer-body', wrap).scrollTop : 0;
   const focusedId = document.activeElement && document.activeElement.id;
+  const descOpen = !!t.description || S.ui.descOpen === t.id;
   const html = `
     <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-t">
       <div class="drawer-head"><div class="t" id="dr-t">Крок воронки</div><span class="badge blue" style="max-width:260px;overflow:hidden;text-overflow:ellipsis" title="${esc(flowLabel(found.flow))} · ${esc(st.title)}">${esc(flowLabel(found.flow))} · ${esc(st.title)}</span>
         <button class="icon-btn" data-act="closeDrawer" aria-label="Закрити">${icon('x', 18)}</button></div>
       <div class="drawer-body">
-        <div class="field"><label class="label" for="t-title">Назва кроку</label><input class="input" id="t-title" data-in="tTitle" value="${esc(t.title)}"></div>
-        <div class="field"><label class="label" for="t-desc">Коментар</label><textarea class="textarea" id="t-desc" data-in="tDesc" rows="3" placeholder="Коротка підказка: як виконати крок, на що звернути увагу">${esc(t.description)}</textarea><div class="hint">Показується під назвою кроку на сторінці проєкту.</div></div>
-        <div style="border-top:1px solid var(--border);margin:20px 0 16px"></div>
-        <div class="row" style="margin-bottom:4px"><div class="section-title" style="font-size:15px">Матеріали</div></div>
-        <p class="section-sub" style="font-size:13px">Шаблони повідомлень мовами УКР / РУС / ENG, файли й посилання для цього кроку. На сторінці проєкту поруч буде кнопка «Копіювати».</p>
+        <div class="field ${descOpen ? '' : 'tight'}"><label class="label" for="t-title">Назва кроку</label><input class="input" id="t-title" data-in="tTitle" value="${esc(t.title)}"></div>
+        ${descOpen
+          ? `<div class="field"><label class="label" for="t-desc">Коментар</label><textarea class="textarea auto-grow" id="t-desc" data-in="tDesc" rows="2" placeholder="Як виконати крок, на що звернути увагу">${esc(t.description)}</textarea></div>`
+          : `<button type="button" class="link-btn" data-act="openDesc">${icon('plus', 13)}Додати коментар</button>`}
+        <div class="dr-sep"></div>
+        <div class="dr-sub">Матеріали</div>
         ${t.attachments.map((a, i) => attEditHtml(a, i, t.attachments.length)).join('')}
         <div class="row wrap">
-          <button class="btn soft sm" data-act="addAtt" data-kind="text">${icon('msg', 14)}Шаблон повідомлення</button>
+          <button class="btn soft sm" data-act="addAtt" data-kind="text">${icon('msg', 14)}Шаблон</button>
           <button class="btn sm" data-act="addAtt" data-kind="file">${icon('clip', 14)}Файл</button>
           <button class="btn sm" data-act="addAtt" data-kind="link">${icon('link', 14)}Посилання</button>
         </div>
-        <div style="border-top:1px solid var(--border);margin:24px 0 16px"></div>
+        <div class="dr-sep"></div>
         <button class="btn ghost sm" style="color:var(--danger)" data-act="delTask">${icon('trash', 14)}Видалити крок з воронки</button>
       </div>
       <div class="drawer-foot">${icon('checkCircle', 15)}<span>Зміни зберігаються автоматично</span><span class="sp"></span><button class="btn primary sm" data-act="closeDrawer">Готово</button></div>
@@ -4787,9 +4809,11 @@ function renderDrawer() {
     wrap.addEventListener('mousedown', e => { if (e.target === wrap) closeDrawer(); });
     document.body.appendChild(wrap);
     wrap.innerHTML = html;
+    $$('.auto-grow', wrap).forEach(autosize);
     setTimeout(() => { const ti = $('#t-title'); if (ti && t.title === 'Новий пункт') { ti.focus(); ti.select(); } }, 40);
   } else {
     wrap.innerHTML = html;
+    $$('.auto-grow', wrap).forEach(autosize);
     $('.drawer-body', wrap).scrollTop = keepScroll;
     if (focusedId) { const el = document.getElementById(focusedId); el && el.focus({ preventScroll: true }); }
   }
@@ -4797,28 +4821,26 @@ function renderDrawer() {
 function closeDrawer() { S.ui.settingsTask = null; const w = $('#drawer'); if (w) w.remove(); render(); }
 
 function attEditHtml(a, i, n) {
-  const ctrls = `
-    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="-1" aria-label="Вище" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp', 14)}</button>
-    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="1" aria-label="Нижче" ${i === n - 1 ? 'disabled' : ''}>${icon('arrowDown', 14)}</button>
-    <button class="icon-btn sm danger" data-act="attDel" data-aid="${a.id}" aria-label="Видалити">${icon('trash', 14)}</button>`;
+  const acts = `<span class="att-acts">${n > 1 ? `
+    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="-1" aria-label="Вище" title="Вище" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp', 14)}</button>
+    <button class="icon-btn sm" data-act="attMove" data-aid="${a.id}" data-dir="1" aria-label="Нижче" title="Нижче" ${i === n - 1 ? 'disabled' : ''}>${icon('arrowDown', 14)}</button>` : ''}
+    <button class="icon-btn sm danger" data-act="attDel" data-aid="${a.id}" aria-label="Видалити" title="Видалити">${icon('trash', 14)}</button></span>`;
   if (a.kind === 'text') {
     const lang = (S.ui.editLang || {})[a.id] || 'uk';
-    return `<div class="att-edit">
-      <div class="att-edit-head">${icon('msg', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва шаблону" aria-label="Назва шаблону">${ctrls}</div>
-      <div class="att-edit-body">
-        <div class="row" style="margin-bottom:8px">
-          <div class="seg">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="editLang" data-aid="${a.id}" data-lang="${l.id}" title="${l.name}${a.texts[l.id] ? '' : ' — порожньо'}">${l.short}${a.texts[l.id] ? '' : '<span class="mini-dot" style="opacity:.5"></span>'}</button>`).join('')}</div>
-          <span class="sp"></span><span class="muted" style="font-size:12px">${lang === 'uk' ? 'Основна мова' : 'Переклад'}</span>
-        </div>
-        <textarea class="textarea" rows="7" id="att-${a.id}-${lang}" data-in="aText" data-aid="${a.id}" data-lang="${lang}" placeholder="${lang === 'uk' ? 'Текст шаблону українською' : lang === 'ru' ? 'Текст шаблона на русском' : 'Template text in English'}">${esc(a.texts[lang] || '')}</textarea>
-        <div class="hint">Заготовки на кшталт <span class="code-chip">@тег саппорта</span> чи <span class="code-chip">[дата]</span> на сторінці проєкту підсвічуються жовтим — їх треба замінити перед відправкою.</div>
-      </div></div>`;
+    return `<div class="att-edit tpl">
+      <div class="tpl-bar">
+        <div class="seg">${LANGS.map(l => `<button type="button" class="${l.id === lang ? 'on' : ''}" data-act="editLang" data-aid="${a.id}" data-lang="${l.id}" title="${l.name}${a.texts[l.id] ? '' : ' — порожньо'}">${l.short}${a.texts[l.id] ? '' : '<span class="mini-dot" style="opacity:.5"></span>'}</button>`).join('')}</div>
+        <span class="sp"></span>${acts}
+        <button class="icon-btn sm copy" data-act="copyAtt" data-aid="${a.id}" data-lang="${lang}" aria-label="Копіювати" title="Копіювати">${icon('copy', 15)}</button>
+      </div>
+      <textarea class="tpl-text auto-grow" id="att-${a.id}-${lang}" data-in="aText" data-aid="${a.id}" data-lang="${lang}" aria-label="Текст шаблону" placeholder="${lang === 'uk' ? 'Текст шаблону українською' : lang === 'ru' ? 'Текст шаблона на русском' : 'Template text in English'}">${esc(a.texts[lang] || '')}</textarea>
+    </div>`;
   }
   if (a.kind === 'file') {
     return `<div class="att-edit"><div class="att-edit-head">${icon('file', 15)}<div style="flex:1;min-width:0;padding:0 4px"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.name)}</div><div class="muted" style="font-size:12px">${fmtSize(a.size || 0)}</div></div>
-      <button class="icon-btn sm" data-act="dlFile" data-fid="${a.fileId}" data-name="${esc(a.name)}" aria-label="Завантажити">${icon('download', 14)}</button>${ctrls}</div></div>`;
+      ${acts}<button class="icon-btn sm" data-act="dlFile" data-fid="${a.fileId}" data-name="${esc(a.name)}" aria-label="Завантажити" title="Завантажити">${icon('download', 14)}</button></div></div>`;
   }
-  return `<div class="att-edit"><div class="att-edit-head">${icon('link', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва посилання" aria-label="Назва посилання">${ctrls}</div>
+  return `<div class="att-edit"><div class="att-edit-head">${icon('link', 15)}<input class="inline-input" data-in="aTitle" data-aid="${a.id}" value="${esc(a.title)}" placeholder="Назва посилання" aria-label="Назва посилання">${acts}</div>
     <div class="att-edit-body"><input class="input" type="url" data-in="aUrl" data-aid="${a.id}" value="${esc(a.url || '')}" placeholder="https://…" aria-label="Адреса"></div></div>`;
 }
 
@@ -4975,9 +4997,9 @@ function render() {
   if (S.ui.settingsTask && (r.parts[0] === 'flows' || (r.parts[0] === 'settings' && r.parts[1] === 'flow'))) renderDrawer(); else if ($('#drawer')) { S.ui.settingsTask = null; $('#drawer').remove(); }
 }
 function autosize(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
-document.addEventListener('input', e => { if (e.target.matches && e.target.matches('.inline-input.auto')) autosize(e.target); });
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('.inline-input.auto, .auto-grow')) autosize(e.target); });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('textarea[data-single]')) { e.preventDefault(); e.target.blur(); } });
-window.addEventListener('resize', debounce(() => $$('.inline-input.auto').forEach(autosize), 150));
+window.addEventListener('resize', debounce(() => $$('.inline-input.auto, .auto-grow').forEach(autosize), 150));
 function stepperFade(el) {
   const max = el.scrollWidth - el.clientWidth;
   el.classList.toggle('fl', el.scrollLeft > 2);
@@ -5169,6 +5191,7 @@ const ACTIONS = {
     const f = findAtt(el.dataset.aid); if (!f) return;
     const c = curClient();
     const raw = f.a.texts[el.dataset.lang] || '';
+    if (!raw.trim()) return toast('Шаблон порожній');
     const text = raw, missing = placeholders(raw);
     if (!await copyText(text)) return toast('Не вдалося скопіювати', { error: true });
     toast(missing.length ? `Скопійовано. Замініть: ${missing.join(', ')}` : `Скопійовано (${langOf(el.dataset.lang).short})`);
@@ -5220,9 +5243,10 @@ const ACTIONS = {
     const kind = el.dataset.kind;
     if (kind === 'text') {
       const id = uid('a_');
-      updateSettings(() => f.t.attachments.push({ id, kind: 'text', title: 'Новий шаблон', texts: { uk: '', ru: '', en: '' } }), { render: false });
+      updateSettings(() => f.t.attachments.push({ id, kind: 'text', title: '', texts: { uk: '', ru: '', en: '' } }), { render: false });
+      S.ui.editLang = { ...(S.ui.editLang || {}), [id]: 'uk' };
       renderDrawer();
-      const inp = $(`#drawer [data-in=aTitle][data-aid="${id}"]`); if (inp) { inp.scrollIntoView({ block: 'center' }); inp.focus(); inp.select(); }
+      const ta = $(`#att-${id}-uk`); if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus(); }
     } else if (kind === 'link') {
       const id = uid('a_');
       updateSettings(() => f.t.attachments.push({ id, kind: 'link', title: '', url: '' }), { render: false });
@@ -5250,11 +5274,12 @@ const ACTIONS = {
     const f = findTask(S.ui.settingsTask); if (!f) return;
     const a = f.t.attachments.find(x => x.id === el.dataset.aid); if (!a) return;
     const hasContent = a.kind === 'file' || (a.kind === 'text' && Object.values(a.texts).some(Boolean));
-    if (hasContent && !await confirmDialog({ title: a.kind === 'file' ? 'Видалити файл?' : 'Видалити шаблон?', text: `«${esc(a.title || a.name)}» зникне з цього пункту в усіх проєктах.`, confirm: 'Видалити' })) return;
+    if (hasContent && !await confirmDialog({ title: a.kind === 'file' ? 'Видалити файл?' : 'Видалити шаблон?', text: a.kind === 'file' ? `«${esc(a.name)}» зникне з цього кроку в усіх проєктах.` : 'Шаблон усіма мовами зникне з цього кроку в усіх проєктах.', confirm: 'Видалити' })) return;
     updateSettings(() => { f.t.attachments = f.t.attachments.filter(x => x.id !== a.id); }, { render: false });
     if (a.kind === 'file') deleteFilesIfUnused([a.fileId]);
     renderDrawer();
   },
+  openDesc() { S.ui.descOpen = S.ui.settingsTask; renderDrawer(); const ta = $('#t-desc'); ta && ta.focus(); },
   editLang(el) {
     S.ui.editLang = S.ui.editLang || {}; S.ui.editLang[el.dataset.aid] = el.dataset.lang;
     renderDrawer();
