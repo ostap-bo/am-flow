@@ -70,12 +70,8 @@ window.AMFLOW_FIREBASE_CONFIG = {
 ## Структура
 
 ```
-index.html          ← зібраний застосунок з усім вбудованим (для роботи сайту достатньо лише його)
-vendor/firebase.js  ← Firebase SDK 13.4.0 (Auth + Firestore); вбудовується в index.html під час збирання
-firestore.rules     ← правила безпеки для Firestore
-src/                ← вихідний код: стилі та модулі JS
-tools/build.py      ← збирає src/ в index.html: python3 tools/build.py
-build/              ← як перезібрати vendor/firebase.js: cd build && npm install && npm run build
+index.html       ← увесь застосунок: код, стилі й Firebase SDK 13.4.0 вбудовані в один файл
+firestore.rules  ← правила безпеки для Firestore
 ```
 
-Якщо редагуєте `src/`, після змін запустіть `python3 tools/build.py`. Збереження конфігу Firebase в `index.html` (варіант А) треба повторити після кожного перезбирання, або впишіть його в `src/shell.html`.
+Для роботи сайту достатньо одного `index.html`. Конфіг Firebase уже вписано в нього (блок `window.AMFLOW_FIREBASE_CONFIG` у `<head>`).
