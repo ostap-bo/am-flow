@@ -396,7 +396,11 @@ textarea.inline-input.auto { resize: none; overflow: hidden; min-height: 34px; }
 .ps-side .k { font-size: 12px; color: var(--text-3); }
 .ps-side .v { font-weight: 600; font-size: 13.5px; }
 
-.stepper { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; scrollbar-width: thin; }
+.stepper { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 2px; margin-bottom: 14px; scrollbar-width: none; -ms-overflow-style: none; }
+.stepper::-webkit-scrollbar { display: none; }
+.stepper.fr { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.stepper.fl { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px); mask-image: linear-gradient(to right, transparent, #000 56px); }
+.stepper.fl.fr { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
 .step { display: flex; align-items: center; gap: 8px; padding: 7px 12px 7px 8px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; white-space: nowrap; font-size: 13px; color: var(--text-2); font-weight: 550; }
 .step:hover { border-color: var(--border-strong); color: var(--text); }
 .step .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; background: var(--surface-3); color: var(--text-2); }
@@ -651,6 +655,21 @@ textarea.inline-input.auto { resize: none; overflow: hidden; min-height: 34px; }
   .client-head h1 { font-size: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---------- custom dropdown ---------- */
+.dd { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px 0 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--text); font-weight: 550; font-size: 13.5px; cursor: pointer; white-space: nowrap; transition: border-color .12s, box-shadow .12s, background .12s; }
+.dd:hover { background: var(--surface-2); }
+.dd:focus-visible, .dd[aria-expanded="true"] { outline: none; border-color: var(--primary); box-shadow: var(--focus); }
+.dd svg { color: var(--text-3); margin-left: 2px; }
+.dd.sm { height: 30px; font-size: 13px; padding: 0 8px 0 10px; border-radius: 7px; }
+.dd .dd-l { flex: 1; text-align: left; }
+.mdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.menu button.on { color: var(--primary-text); font-weight: 600; }
+.menu .mcheck { width: 16px; display: inline-grid; place-items: center; color: var(--primary-text); }
+.menu .mcheck svg { color: var(--primary-text); }
+.modal .dd { width: 100%; }
+/* ---------- inactive steps ---------- */
+.task.inactive .task-title .tt { color: var(--text-3); }
 
 </style>
 </head>
@@ -3861,6 +3880,11 @@ const BUILTIN_VARS = [
   { key: 'шифр', label: 'Шифр проєкту' },
 ];
 const pname = c => (c && (c.code || c.name)) || '—';
+const SCOPES = [
+  { id: 'all', label: 'Усі проєкти', short: '' },
+  { id: 'new', label: 'Лише нові', short: 'Нові' },
+  { id: 'transferred', label: 'Лише передані', short: 'Передані' },
+];
 
 function defaultSettings() {
   return {
@@ -3883,6 +3907,7 @@ function normalizeSettings(s) {
       t.id = t.id || uid('t_'); t.title = t.title || 'Пункт'; t.description = t.description || '';
       if (t.dueDays === '' || t.dueDays === undefined) t.dueDays = null;
       t.attachments = Array.isArray(t.attachments) ? t.attachments : [];
+      t.scope = ['all', 'new', 'transferred'].includes(t.scope) ? t.scope : 'all';
       t.attachments.forEach(a => { a.id = a.id || uid('a_'); if (a.kind === 'text') a.texts = Object.assign({ uk: '', ru: '', en: '' }, a.texts || {}); });
     });
   });
@@ -3895,7 +3920,7 @@ function newClient(data) {
   const now = Date.now();
   return {
     id: uid('c_'), name: (data.code || '').trim().toUpperCase(), code: (data.code || '').trim().toUpperCase(),
-    status: data.status || 'onboarding', lang: data.lang || 'uk', color: data.color || PALETTE[Math.floor(Math.random() * PALETTE.length)],
+    status: data.status || 'onboarding', lang: data.lang || 'uk', transferred: !!data.transferred, color: data.color || PALETTE[Math.floor(Math.random() * PALETTE.length)],
     startDate: data.startDate || todayISO(), fields: {}, progress: {}, customTasks: [], notes: [], files: [],
     history: [{ id: uid('h_'), at: now, type: 'created', text: 'Проєкт створено' }],
     createdAt: now, updatedAt: now,
@@ -3904,7 +3929,7 @@ function newClient(data) {
 function normalizeClient(c) {
   c.fields = c.fields || {}; c.progress = c.progress || {}; c.customTasks = c.customTasks || [];
   c.notes = c.notes || []; c.files = c.files || []; c.history = c.history || [];
-  c.status = c.status || 'onboarding'; c.lang = c.lang || 'uk'; c.startDate = c.startDate || todayISO();
+  c.status = c.status || 'onboarding'; c.transferred = !!c.transferred; c.lang = c.lang || 'uk'; c.startDate = c.startDate || todayISO();
   c.color = c.color || colorFor(c.id); c.code = c.code || c.name || ''; c.name = c.code;
   return c;
 }
@@ -4095,68 +4120,28 @@ function updateClient(id, fn, { log, render: r = true } = {}) {
 
 /* ---------- flow helpers ---------- */
 function clientStages(c) {
-  const stages = S.settings.stages.map(st => ({
+  const mode = c.transferred ? 'transferred' : 'new';
+  return S.settings.stages.map(st => ({
     id: st.id, title: st.title, description: st.description,
-    tasks: [...st.tasks.map(t => ({ ...t, custom: false })), ...c.customTasks.filter(t => t.stageId === st.id).map(t => ({ ...t, custom: true, attachments: [] }))],
-  }));
-  const orphan = c.customTasks.filter(t => !S.settings.stages.some(s => s.id === t.stageId));
-  if (orphan.length) stages.push({ id: '__extra', title: 'Додаткові пункти', description: 'Пункти проєкту, етап яких видалено з флоу', tasks: orphan.map(t => ({ ...t, custom: true, attachments: [] })) });
-  return stages;
+    tasks: st.tasks
+      .filter(t => c.transferred || t.scope !== 'transferred')
+      .map(t => ({ ...t, active: !t.scope || t.scope === 'all' || t.scope === mode })),
+  })).filter(st => st.tasks.length);
 }
 const taskState = (c, tid) => c.progress[tid] || {};
-function effDue(c, t) {
-  const p = taskState(c, t.id);
-  if (p.due) return p.due;
-  if (t.dueDays !== null && t.dueDays !== undefined && t.dueDays !== '' && c.startDate) return addDays(c.startDate, t.dueDays);
-  return null;
-}
-function dueTone(iso) {
-  if (!iso) return null;
-  const d = diffDays(iso, todayISO());
-  if (d < 0) return 'overdue';
-  if (d === 0) return 'today';
-  if (d <= 3) return 'soon';
-  return 'later';
-}
-function dueLabel(iso) {
-  const d = diffDays(iso, todayISO());
-  if (d < 0) return `Прострочено ${-d} ${plural(-d, 'день', 'дні', 'днів')}`;
-  if (d === 0) return 'Сьогодні';
-  if (d === 1) return 'Завтра';
-  if (d <= 6) return `Через ${d} ${plural(d, 'день', 'дні', 'днів')}`;
-  return 'До ' + fmtDate(iso);
-}
 function progressOf(c) {
   const stages = clientStages(c);
   let total = 0, done = 0, current = null, next = null;
   const stats = stages.map(st => {
-    let t = 0, d = 0, sk = 0;
-    st.tasks.forEach(task => { const p = taskState(c, task.id); if (p.skipped) sk++; else { t++; if (p.done) d++; } });
+    let t = 0, d = 0;
+    st.tasks.forEach(task => { if (!task.active) return; t++; if (taskState(c, task.id).done) d++; });
     total += t; done += d;
-    const complete = t === d;
-    return { stage: st, total: t, done: d, skipped: sk, complete, allSkipped: t === 0 && sk > 0 };
+    return { stage: st, total: t, done: d, complete: t > 0 && t === d, inactive: t === 0 };
   });
   for (const s of stats) {
-    if (!s.complete) {
-      current = s.stage;
-      next = s.stage.tasks.find(t => { const p = taskState(c, t.id); return !p.done && !p.skipped; });
-      break;
-    }
+    if (s.total && !s.complete) { current = s.stage; next = s.stage.tasks.find(t => t.active && !taskState(c, t.id).done); break; }
   }
   return { stages, stats, total, done, pct: total ? Math.round(done / total * 100) : 0, current, next, finished: total > 0 && done === total };
-}
-function dueItems(filterFn = () => true) {
-  const out = [];
-  for (const c of S.clients.values()) {
-    if (c.status === 'finished') continue;
-    clientStages(c).forEach(st => st.tasks.forEach(t => {
-      const p = taskState(c, t.id);
-      if (p.done || p.skipped) return;
-      const due = effDue(c, t);
-      if (due && filterFn(due)) out.push({ c, st, t, due });
-    }));
-  }
-  return out.sort((a, b) => a.due.localeCompare(b.due));
 }
 function allVars(c) {
   const map = {};
@@ -4246,6 +4231,9 @@ function openModal({ title, text = '', body = '', icon: ic = null, tone = '', wi
     };
     wrap.addEventListener('mousedown', e => { if (e.target === wrap) close(null); });
     wrap.addEventListener('click', e => {
+      const ddb = e.target.closest('[data-dd]'); if (ddb) { openDd(ddb); return; }
+      const tg = e.target.closest('[data-toggle]');
+      if (tg) { const on = tg.getAttribute('aria-checked') !== 'true'; tg.setAttribute('aria-checked', String(on)); const h = $(`input[name="${tg.dataset.toggle}"]`, wrap); if (h) h.value = on ? '1' : ''; return; }
       const b = e.target.closest('[data-i]'); if (b) run(actions[+b.dataset.i]);
       if (e.target.closest('[data-x]')) close(null);
       const sb = e.target.closest('.seg[data-name] button');
@@ -4276,14 +4264,16 @@ function confirmDialog({ title, text, confirm = 'Підтвердити', tone =
 /* ---------- popover menu ---------- */
 let openMenuEl = null;
 function closeMenu() { if (openMenuEl) { openMenuEl.remove(); openMenuEl = null; } }
-function showMenu(anchor, items) {
+function showMenu(anchor, items, opts = {}) {
   closeMenu();
   const m = document.createElement('div');
   m.className = 'menu'; m.setAttribute('role', 'menu');
-  m.innerHTML = items.filter(Boolean).map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="menuitem" data-mi="${i}" class="${it.danger ? 'danger' : ''}">${it.icon ? icon(it.icon, 16) : ''}<span>${esc(it.label)}</span></button>`).join('');
+  m.innerHTML = items.filter(Boolean).map((it, i) => it === '-' ? '<hr>' : `<button type="button" role="${it.checked !== undefined ? 'menuitemradio' : 'menuitem'}" ${it.checked !== undefined ? `aria-checked="${!!it.checked}"` : ''} data-mi="${i}" class="${it.danger ? 'danger' : ''} ${it.checked ? 'on' : ''}">${it.dot ? `<span class="mdot" style="background:${it.dot}"></span>` : it.icon ? icon(it.icon, 16) : ''}<span style="flex:1">${esc(it.label)}</span>${it.checked !== undefined ? `<span class="mcheck">${it.checked ? icon('check', 15, 2.4) : ''}</span>` : ''}</button>`).join('');
   document.body.appendChild(m);
+  if (opts.matchWidth) m.style.minWidth = Math.max(anchor.offsetWidth, 180) + 'px';
   const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
-  let left = r.right - mw, top = r.bottom + 6;
+  let left = opts.alignLeft ? r.left : r.right - mw, top = r.bottom + 6;
+  if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
   if (left < 8) left = Math.min(r.left, window.innerWidth - mw - 8);
   if (top + mh > window.innerHeight - 8) top = r.top - mh - 6;
   m.style.left = Math.max(8, left) + 'px'; m.style.top = Math.max(8, top) + 'px';
@@ -4296,7 +4286,7 @@ function showMenu(anchor, items) {
     if (e.key === 'Escape') { closeMenu(); anchor.focus(); }
   });
   openMenuEl = m;
-  const fb = $('button', m); fb && fb.focus({ preventScroll: true });
+  const fb = $('button.on', m) || $('button', m); fb && fb.focus({ preventScroll: true });
 }
 document.addEventListener('mousedown', e => { if (openMenuEl && !openMenuEl.contains(e.target)) closeMenu(); }, true);
 window.addEventListener('resize', closeMenu);
@@ -4315,14 +4305,30 @@ const avatarHtml = (c, cls = '') => `<div class="avatar ${cls}" style="backgroun
 const statusBadge = id => { const s = statusOf(id); return `<span class="badge ${s.tone}"><span class="bd"></span>${s.label}</span>`; };
 const ringHtml = (pct, done, sm = false) => `<div class="ring ${sm ? 'sm' : ''} ${done ? 'done' : ''}" style="--p:${pct}"><span>${sm ? '' : pct + '%'}</span></div>`;
 const progressBar = (pct, done) => `<div class="progress ${done ? 'done' : ''}"><i style="width:${pct}%"></i></div>`;
-function dueChip(iso, { short = false } = {}) {
-  if (!iso) return '';
-  const tone = dueTone(iso);
-  const cls = tone === 'overdue' ? 'red' : tone === 'today' ? 'amber' : tone === 'soon' ? 'blue' : 'outline';
-  return `<span class="badge ${cls}" title="Термін: ${fmtDate(iso)}">${icon('clock', 12)}${short && tone === 'later' ? fmtDate(iso) : dueLabel(iso)}</span>`;
-}
 function emptyState({ ic = 'info', title, text = '', actions = '', sm = false }) {
   return `<div class="empty ${sm ? 'sm' : ''}"><div class="empty-ico">${icon(ic, 24)}</div><h3>${esc(title)}</h3>${text ? `<p>${text}</p>` : ''}${actions}</div>`;
+}
+
+/* ---------- custom dropdown ---------- */
+const STATUS_DOT = { onboarding: 'var(--primary)', active: 'var(--success)', paused: 'var(--warning)', finished: 'var(--text-3)' };
+const DD = {
+  status: () => STATUSES.map(s => ({ v: s.id, label: s.label, dot: STATUS_DOT[s.id] })),
+  sort: () => [{ v: 'name', label: 'За шифром' }, { v: 'progress', label: 'За прогресом' }, { v: 'recent', label: 'Нещодавно змінені' }],
+};
+function ddLabel(kind, v) { const o = DD[kind]().find(x => x.v === v) || DD[kind]()[0]; return o; }
+function ddHtml(kind, value, { name = '', cls = '', aria = '' } = {}) {
+  const o = ddLabel(kind, value);
+  return `<button type="button" class="dd ${cls}" data-dd="${kind}" data-value="${esc(o.v)}" ${name ? `data-name="${name}"` : ''} aria-haspopup="listbox" aria-label="${esc(aria)}">${o.dot ? `<span class="mdot" style="background:${o.dot}"></span>` : ''}<span class="dd-l">${esc(o.label)}</span>${icon('chevD', 15)}</button>${name ? `<input type="hidden" name="${name}" value="${esc(o.v)}">` : ''}`;
+}
+function openDd(btn, onPick) {
+  const kind = btn.dataset.dd, cur = btn.dataset.value;
+  showMenu(btn, DD[kind]().map(o => ({ label: o.label, dot: o.dot, checked: o.v === cur, fn: () => {
+    btn.dataset.value = o.v; $('.dd-l', btn).textContent = o.label;
+    const dot = $('.mdot', btn); if (dot && o.dot) dot.style.background = o.dot;
+    if (btn.dataset.name) { const h = btn.nextElementSibling; if (h && h.name === btn.dataset.name) h.value = o.v; }
+    onPick && onPick(o.v);
+    btn.focus();
+  } })), { matchWidth: true, alignLeft: true });
 }
 
 /* ============ AM Flow — views ============ */
@@ -4358,7 +4364,6 @@ function renderSidebar(r) {
   const p0 = r.parts[0] || '';
   const all = [...S.clients.values()];
   const live = all.filter(c => c.status !== 'finished').sort((a, b) => pname(a).localeCompare(pname(b), 'uk'));
-  const overdueSet = new Set(dueItems(d => dueTone(d) === 'overdue').map(x => x.c.id));
   const syncLabel = { synced: 'Синхронізовано', saving: 'Зберігаю…', offline: 'Офлайн · зміни збережено локально', error: 'Помилка синхронізації', local: 'Дані лише в цьому браузері' }[S.sync] || '';
   const syncCls = S.sync === 'local' ? 'offline' : S.sync;
   sb.innerHTML = `
@@ -4376,7 +4381,7 @@ function renderSidebar(r) {
       ${live.map(c => { const pr = progressOf(c); return `
         <a class="nav-client ${p0 === 'c' && r.parts[1] === c.id ? 'active' : ''}" href="#/c/${c.id}" title="${esc(pname(c))} · ${pr.pct}%" style="font-family:var(--mono);font-size:13px">
           ${ringHtml(pr.pct, pr.finished, true)}<span class="nm">${esc(pname(c))}</span>
-          ${overdueSet.has(c.id) ? `<span class="badge red" style="height:18px;padding:0 5px" title="Є прострочені пункти">${icon('clock', 11)}</span>` : ''}
+          <span class="muted" style="font-size:11.5px;font-family:var(--font)">${pr.finished ? icon('check', 13, 2.6) : pr.pct + '%'}</span>
         </a>`; }).join('') || `<div class="muted" style="padding:6px 10px;font-size:13px">Поки немає проєктів</div>`}
       <button class="nav-item" data-act="newClient" style="margin-top:4px;color:var(--text-3)">${icon('plus', 16)}Новий проєкт</button>
     </div>
@@ -4394,64 +4399,43 @@ function renderSidebar(r) {
 function viewDashboard() {
   const all = [...S.clients.values()];
   const live = all.filter(c => c.status !== 'finished');
-  const t = todayISO();
-  const overdue = dueItems(d => d < t);
-  const todayItems = dueItems(d => d === t);
-  const week = dueItems(d => d >= t && d <= addDays(t, 7));
-  const attentionAll = dueItems(d => d <= addDays(t, 7));
-  const attention = attentionAll.slice(0, 8);
+  const rows = live.map(c => ({ c, pr: progressOf(c) }));
+  const inProgress = rows.filter(x => !x.pr.finished).sort((a, b) => a.pr.pct - b.pr.pct);
+  const finished = rows.filter(x => x.pr.finished).length;
   const weekAgo = Date.now() - 7 * 86400000;
   let doneWeek = 0;
   all.forEach(c => Object.values(c.progress).forEach(p => { if (p.done && p.doneAt >= weekAgo) doneWeek++; }));
   const feed = [];
-  all.forEach(c => c.history.forEach(h => { if (h.type !== 'field') feed.push({ c, h }); }));
+  all.forEach(c => c.history.forEach(h => feed.push({ c, h })));
   feed.sort((a, b) => b.h.at - a.h.at);
-  const head = '';
 
   if (!all.length) {
     const noFlow = !S.settings.stages.length;
-    return `<div class="page">${head}<div class="card">${emptyState({
-      ic: 'route', title: noFlow ? 'Почнімо з флоу' : 'Додайте перший проєкт',
-      text: noFlow ? 'Спершу імпортуйте чернетку флоу з файлу або створіть етапи вручну. Потім додайте проєкт: воронка підтягнеться автоматично.' : 'Створіть проєкт за шифром. Воронка з налаштувань підтягнеться автоматично, і ви побачите, що робити далі.',
-      actions: `<div class="row" style="justify-content:center">${noFlow ? `<a class="btn primary" href="#/settings">${icon('layers', 16)}Налаштувати флоу</a><button class="btn" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>` : `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>`}</div>`,
+    return `<div class="page"><div class="card">${emptyState({
+      ic: 'route', title: noFlow ? 'Почнімо з воронки' : 'Додайте перший проєкт',
+      text: noFlow ? 'Спершу імпортуйте воронку з файлу або створіть етапи вручну. Потім додайте проєкт: воронка підтягнеться автоматично.' : 'Створіть проєкт за шифром. Воронка з налаштувань підтягнеться автоматично, і ви побачите, що робити далі.',
+      actions: `<div class="row" style="justify-content:center">${noFlow ? `<a class="btn primary" href="#/settings">${icon('layers', 16)}Налаштувати воронку</a><button class="btn" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>` : `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>`}</div>`,
     })}</div></div>`;
   }
-
   const stat = (ic, tone, label, val, foot) => `<div class="card stat"><div class="stat-top">${label}<div class="stat-ico ${tone}">${icon(ic, 16)}</div></div><div class="stat-val">${val}</div><div class="stat-foot">${foot}</div></div>`;
-  const onb = live.filter(c => c.status === 'onboarding').length;
-
-  const rows = live.map(c => ({ c, pr: progressOf(c) })).sort((a, b) => a.pr.pct - b.pr.pct);
-  return `<div class="page">${head}
+  const transferred = live.filter(c => c.transferred).length;
+  return `<div class="page">
     <div class="grid cols-4 mb-16">
-      ${stat('users', '', 'Проєкти в роботі', live.length, onb ? `${onb} на онбордингу` : 'Без онбордингів')}
-      ${stat('alert', 'red', 'Прострочено', overdue.length, overdue.length ? `у ${new Set(overdue.map(x => x.c.id)).size} ${plural(new Set(overdue.map(x => x.c.id)).size, 'проєкті', 'проєктах', 'проєктах')}` : 'Усе вчасно')}
-      ${stat('calendar', 'amber', 'На тиждень', week.length, todayItems.length ? `${todayItems.length} на сьогодні` : 'На сьогодні нічого')}
-      ${stat('checkCircle', 'green', 'Виконано за 7 днів', doneWeek, plural(doneWeek, 'пункт', 'пункти', 'пунктів'))}
+      ${stat('users', '', 'Проєкти в роботі', live.length, transferred ? `з них ${transferred} від іншого АМ` : 'усі нові')}
+      ${stat('target', 'amber', 'Воронка в процесі', inProgress.length, inProgress.length ? `найменше: ${esc(pname(inProgress[0].c))} — ${inProgress[0].pr.pct}%` : 'усе пройдено')}
+      ${stat('checkCircle', 'green', 'Воронку пройдено', finished, plural(finished, 'проєкт', 'проєкти', 'проєктів'))}
+      ${stat('check', '', 'Виконано за 7 днів', doneWeek, plural(doneWeek, 'крок', 'кроки', 'кроків'))}
     </div>
     <div class="grid dash">
-      <div class="grid">
-        <div class="card">
-          <div class="card-head"><div><h2 class="card-title">Потребує уваги</h2><div class="card-sub">Прострочені пункти й терміни на найближчий тиждень</div></div></div>
-          <div class="list" style="margin-top:10px">
-            ${attention.length ? attention.map(x => `
-              <a class="list-item" href="#/c/${x.c.id}?task=${x.t.id}">
-                <span class="code-chip" style="min-width:48px;text-align:center">${esc(pname(x.c))}</span>
-                <div class="grow"><div class="t">${esc(x.t.title)}</div><div class="s">${esc(x.st.title)}</div></div>
-                ${dueChip(x.due)}
-              </a>`).join('') : emptyState({ ic: 'checkCircle', title: 'Усе під контролем', text: 'Немає прострочених пунктів і термінів на найближчий тиждень.', sm: true })}
-            ${attentionAll.length > attention.length ? `<div class="list-more">І ще ${attentionAll.length - attention.length} ${plural(attentionAll.length - attention.length, 'пункт', 'пункти', 'пунктів')} — дивіться на сторінках проєктів</div>` : ''}
-          </div>
-        </div>
-        <div class="card" style="overflow:hidden">
-          <div class="card-head"><h2 class="card-title">Проєкти в роботі</h2><a class="btn ghost sm" href="#/clients">Усі ${icon('chevR', 14)}</a></div>
-          <div style="overflow-x:auto;margin-top:6px">
-          ${rows.length ? `<table class="table" style="table-layout:fixed"><thead><tr><th style="width:38%">Проєкт</th><th class="hide-m">Етап і наступний крок</th><th style="width:130px">Прогрес</th></tr></thead><tbody>
-            ${rows.map(({ c, pr }) => `<tr data-act="openClient" data-id="${c.id}">
-              <td><div class="cell-client"><div style="min-width:0"><div class="nm cell-trunc" style="max-width:100%;font-family:var(--mono)">${esc(pname(c))}</div><div class="cell-muted">${statusOf(c.status).label}</div></div></div></td>
-              <td class="hide-m"><div class="cell-trunc" style="max-width:100%;font-weight:500">${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : '—'}</div><div class="cell-muted cell-trunc" style="max-width:100%">${pr.next ? 'Далі: ' + esc(pr.next.title) : ''}</div></td>
-              <td><div class="row">${progressBar(pr.pct, pr.finished)}<span class="cell-muted" style="width:36px;text-align:right;flex-shrink:0">${pr.pct}%</span></div></td>
-            </tr>`).join('')}</tbody></table>` : emptyState({ ic: 'users', title: 'Немає активних проєктів', sm: true })}
-          </div>
+      <div class="card" style="overflow:hidden">
+        <div class="card-head"><div><h2 class="card-title">Наступні кроки</h2><div class="card-sub">Що зробити далі в кожному проєкті</div></div></div>
+        <div class="list" style="margin-top:10px">
+          ${inProgress.length ? inProgress.map(({ c, pr }) => `
+            <a class="list-item" href="#/c/${c.id}?task=${pr.next.id}">
+              <span class="code-chip" style="min-width:52px;text-align:center">${esc(pname(c))}</span>
+              <div class="grow"><div class="t">${esc(pr.next.title)}</div><div class="s">${esc(pr.current.title)}${c.transferred ? ' · від іншого АМ' : ''}</div></div>
+              <div class="row" style="width:120px;flex-shrink:0">${progressBar(pr.pct, false)}<span class="cell-muted" style="width:34px;text-align:right;flex-shrink:0">${pr.pct}%</span></div>
+            </a>`).join('') : emptyState({ ic: 'checkCircle', title: 'Усе пройдено', text: 'У всіх проєктах воронку завершено.', sm: true })}
         </div>
       </div>
       <div class="card">
@@ -4486,20 +4470,13 @@ function viewClients() {
         ${STATUSES.map(s => `<button class="${S.ui.filter === s.id ? 'on' : ''}" data-act="filter" data-v="${s.id}">${s.label} · ${counts[s.id]}</button>`).join('')}
       </div>
       <div class="sp"></div>
-      <select class="select" style="width:auto" data-in="sort" aria-label="Сортування">
-        <option value="name" ${S.ui.sort === 'name' ? 'selected' : ''}>За назвою</option>
-        <option value="progress" ${S.ui.sort === 'progress' ? 'selected' : ''}>За прогресом</option>
-        <option value="recent" ${S.ui.sort === 'recent' ? 'selected' : ''}>Нещодавно змінені</option>
-      </select>
+      ${ddHtml('sort', S.ui.sort, { aria: 'Сортування' })}
     </div>
-    ${withPr.length ? `<div class="client-grid">${withPr.map(({ c, pr }) => {
-      const od = dueItems(d => dueTone(d) === 'overdue').filter(x => x.c.id === c.id).length;
-      return `<a class="card client-card" href="#/c/${c.id}">
-        <div class="cc-top"><div style="min-width:0;flex:1"><div class="nm" style="font-family:var(--mono);font-size:17px;letter-spacing:.02em">${esc(pname(c))}</div><div class="cc-meta"><span>${langOf(c.lang).name}</span><span>·</span><span>старт ${fmtDate(c.startDate)}</span></div></div>${statusBadge(c.status)}</div>
-        <div><div class="cc-row"><span>${pr.current ? esc(pr.current.title) : pr.total ? 'Усі етапи завершено' : 'Флоу порожній'}</span><span>${pr.done}/${pr.total}</span></div>${progressBar(pr.pct, pr.finished)}</div>
-        <div class="cc-next">${icon('target', 15)}<span>${pr.next ? `<b>Далі:</b> ${esc(pr.next.title)}` : 'Немає невиконаних пунктів'}</span></div>
-        ${od ? `<div><span class="badge red">${icon('clock', 12)}${od} ${plural(od, 'прострочений пункт', 'прострочені пункти', 'прострочених пунктів')}</span></div>` : ''}
-      </a>`; }).join('')}</div>`
+    ${withPr.length ? `<div class="client-grid">${withPr.map(({ c, pr }) => `<a class="card client-card" href="#/c/${c.id}">
+        <div class="cc-top"><div style="min-width:0;flex:1"><div class="nm" style="font-family:var(--mono);font-size:17px;letter-spacing:.02em">${esc(pname(c))}</div><div class="cc-meta"><span>${c.transferred ? 'Від іншого АМ' : 'Новий клієнт'}</span><span>·</span><span>${langOf(c.lang).name}</span></div></div>${statusBadge(c.status)}</div>
+        <div><div class="cc-row"><span>${pr.current ? esc(pr.current.title) : pr.total ? 'Воронку пройдено' : 'Воронка порожня'}</span><span>${pr.done}/${pr.total}</span></div>${progressBar(pr.pct, pr.finished)}</div>
+        <div class="cc-next">${icon(pr.next ? 'target' : 'checkCircle', 15)}<span>${pr.next ? `<b>Далі:</b> ${esc(pr.next.title)}` : 'Усі кроки виконано'}</span></div>
+      </a>`).join('')}</div>`
     : `<div class="card">${all.length ? emptyState({ ic: 'search', title: 'Нічого не знайдено', text: 'Спробуйте інший запит або фільтр.' }) : emptyState({ ic: 'users', title: 'Ще немає проєктів', text: 'Створіть перший проєкт: воронка підтягнеться автоматично.', actions: `<button class="btn primary" data-act="newClient">${icon('plus', 16)}Новий проєкт</button>` })}</div>`}
   </div>`;
 }
@@ -4507,23 +4484,20 @@ function viewClients() {
 /* ---------- client ---------- */
 function viewClient(c, tab, q) {
   const pr = progressOf(c);
-  const hist = c.history.length;
   const tabs = [
-    { id: 'process', label: 'Процес', count: `${pr.done}/${pr.total}` },
-    { id: 'history', label: 'Історія', count: hist },
+    { id: 'process', label: 'Воронка', count: `${pr.done}/${pr.total}` },
+    { id: 'history', label: 'Історія', count: c.history.length },
   ];
-  let body = '';
-  if (tab === 'history') body = viewClientHistory(c);
-  else body = viewClientProcess(c, pr, q);
+  const body = tab === 'history' ? viewClientHistory(c) : viewClientProcess(c, pr, q);
   return `<div class="page">
     <div class="crumbs"><a href="#/clients">Проєкти</a>${icon('chevR', 13)}<span>${esc(pname(c))}</span></div>
     <div class="client-head">
       <div class="title-wrap">
         <h1 style="font-family:var(--mono);letter-spacing:.02em">${esc(pname(c))}</h1>
         <div class="meta">
-          <select class="select status-select" data-in="cstatus" aria-label="Статус проєкту">${STATUSES.map(s => `<option value="${s.id}" ${c.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select>
-          <span class="badge outline" title="Мова комунікації">${icon('globe', 12)}${langOf(c.lang).name}</span>
-          <span>Старт ${fmtDate(c.startDate)}</span>
+          ${ddHtml('status', c.status, { cls: 'sm', aria: 'Статус проєкту' })}
+          <span class="badge outline" title="Мова шаблонів">${icon('globe', 12)}${langOf(c.lang).name}</span>
+          ${c.transferred ? `<span class="badge violet">${icon('users', 12)}Від іншого АМ</span>` : `<span class="badge outline">Новий клієнт</span>`}
         </div>
       </div>
       <div class="head-actions">
@@ -4532,7 +4506,7 @@ function viewClient(c, tab, q) {
       </div>
     </div>
     <div class="tabs" role="tablist">
-      ${tabs.map(t => `<a class="tab ${tab === t.id ? 'active' : ''}" role="tab" aria-selected="${tab === t.id}" href="#/c/${c.id}/${t.id}">${t.label}${t.count !== '' ? `<span class="count">${t.count}</span>` : ''}</a>`).join('')}
+      ${tabs.map(t => `<a class="tab ${tab === t.id ? 'active' : ''}" role="tab" aria-selected="${tab === t.id}" href="#/c/${c.id}/${t.id}">${t.label}<span class="count">${t.count}</span></a>`).join('')}
     </div>
     ${body}
   </div>`;
@@ -4546,22 +4520,21 @@ function stageIsOpen(c, st, pr) {
 
 function viewClientProcess(c, pr, q) {
   if (!pr.stages.length) {
-    return `<div class="card">${emptyState({ ic: 'layers', title: 'Флоу ще порожній', text: 'Етапи й підзадачі однакові для всіх проєктів і налаштовуються в одному місці.', actions: `<a class="btn primary" href="#/settings">${icon('sliders', 16)}Налаштувати флоу</a>` })}</div>`;
+    return `<div class="card">${emptyState({ ic: 'layers', title: 'Воронка ще порожня', text: 'Етапи й кроки однакові для всіх проєктів і налаштовуються в одному місці.', actions: `<a class="btn primary" href="#/settings">${icon('sliders', 16)}Налаштувати воронку</a>` })}</div>`;
   }
-  const nextDue = pr.next ? effDue(c, pr.next) : null;
   return `
     <div class="card proc-summary">
       <div class="big-ring ${pr.finished ? 'done' : ''}" style="--p:${pr.pct}"><div>${pr.pct}%</div></div>
       <div class="ps-info">
-        <div class="l1">${pr.finished ? 'Усі етапи пройдено' : 'Поточний етап'}</div>
-        <div class="l2">${pr.current ? esc(pr.current.title) : 'Флоу завершено 🎉'}</div>
-        <div class="l3">${pr.next ? `${icon('target', 14)}Наступний крок: <b>${esc(pr.next.title)}</b> ${dueChip(nextDue)}` : 'Немає невиконаних пунктів'}</div>
+        <div class="l1">${pr.finished ? 'Воронку пройдено' : 'Поточний етап'}</div>
+        <div class="l2">${pr.current ? esc(pr.current.title) : 'Усі кроки виконано 🎉'}</div>
+        <div class="l3">${pr.next ? `${icon('target', 14)}Наступний крок: <b>${esc(pr.next.title)}</b>` : ''}</div>
       </div>
-      <div class="ps-side"><div><div class="k">Виконано</div><div class="v">${pr.done} з ${pr.total}</div></div><div><div class="k">Старт</div><div class="v">${fmtDate(c.startDate)}</div></div></div>
+      <div class="ps-side"><div><div class="k">Виконано</div><div class="v">${pr.done} з ${pr.total}</div></div>${c.transferred ? `<div><div class="k">Тип</div><div class="v">Від іншого АМ</div></div>` : ''}</div>
     </div>
     <div class="stepper" role="list">
-      ${pr.stats.map((s, i) => `<button class="step ${s.complete && s.total ? 'done' : ''} ${s.allSkipped ? 'skipped' : ''} ${pr.current && pr.current.id === s.stage.id ? 'current' : ''}" data-act="jumpStage" data-sid="${s.stage.id}" role="listitem">
-        <span class="n">${s.complete && (s.total || s.allSkipped) ? icon(s.allSkipped ? 'ban' : 'check', 12, 3) : i + 1}</span>${esc(s.stage.title)}</button>`).join('')}
+      ${pr.stats.map((s, i) => `<button class="step ${s.complete ? 'done' : ''} ${s.inactive ? 'skipped' : ''} ${pr.current && pr.current.id === s.stage.id ? 'current' : ''}" data-act="jumpStage" data-sid="${s.stage.id}" role="listitem">
+        <span class="n">${s.complete ? icon('check', 12, 3) : s.inactive ? icon('ban', 12, 2.4) : i + 1}</span>${esc(s.stage.title)}</button>`).join('')}
     </div>
     ${pr.stats.map((s, i) => stageHtml(c, s, i, pr)).join('')}`;
 }
@@ -4570,49 +4543,40 @@ function stageHtml(c, s, i, pr) {
   const st = s.stage;
   const open = stageIsOpen(c, st, pr);
   const isCur = pr.current && pr.current.id === st.id;
-  const complete = s.complete && s.total > 0;
   const pct = s.total ? Math.round(s.done / s.total * 100) : 0;
-  return `<section class="card stage ${open ? 'open' : ''} ${isCur ? 'current' : ''} ${complete ? 'complete' : ''} ${s.allSkipped ? 'skipped' : ''}" id="stage-${st.id}">
+  return `<section class="card stage ${open ? 'open' : ''} ${isCur ? 'current' : ''} ${s.complete ? 'complete' : ''} ${s.inactive ? 'skipped' : ''}" id="stage-${st.id}">
     <div class="stage-head" data-act="toggleStage" data-sid="${st.id}" role="button" tabindex="0" aria-expanded="${open}">
-      <div class="stage-num">${s.allSkipped ? icon('ban', 14, 2.6) : complete ? icon('check', 14, 3) : i + 1}</div>
+      <div class="stage-num">${s.inactive ? icon('ban', 14, 2.6) : s.complete ? icon('check', 14, 3) : i + 1}</div>
       <div class="stage-title"><div class="t">${esc(st.title)}</div>${st.description ? `<div class="d">${esc(st.description)}</div>` : ''}</div>
-      <div class="stage-prog">${s.allSkipped ? '<span class="badge">Пропущено</span>' : `${progressBar(pct, complete)}<span>${s.done}/${s.total}</span>`}</div>
-      ${st.id !== '__extra' ? `<button class="icon-btn sm" data-act="stageMenu" data-sid="${st.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>` : ''}
+      <div class="stage-prog">${s.inactive ? '<span class="badge">Неактивний</span>' : `${progressBar(pct, s.complete)}<span>${s.done}/${s.total}</span>`}</div>
+      ${s.inactive ? '' : `<button class="icon-btn sm" data-act="stageMenu" data-sid="${st.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>`}
       <span class="chev">${icon('chevR', 17)}</span>
     </div>
-    <div class="stage-body">
-      ${st.tasks.length ? st.tasks.map(t => taskHtml(c, t)).join('') : `<div class="muted" style="padding:14px 18px">У цьому етапі ще немає пунктів</div>`}
-      ${st.id !== '__extra' ? `<button class="add-task" data-act="addCustomTask" data-sid="${st.id}">${icon('plus', 15)}Додати пункт лише для цього проєкту</button>` : ''}
-    </div>
+    <div class="stage-body">${st.tasks.map(t => taskHtml(c, t)).join('')}</div>
   </section>`;
 }
 
 function taskHtml(c, t) {
   const p = taskState(c, t.id);
   const open = S.ui.openTask === t.id;
-  const due = effDue(c, t);
+  const done = t.active && p.done;
   const cnt = k => t.attachments.filter(a => a.kind === k).length;
   const nText = cnt('text'), nFile = cnt('file'), nLink = cnt('link');
   const subs = [];
-  if (p.done) subs.push(`<span class="it" style="color:var(--success)">${icon('check', 13, 2.6)}${p.doneAt ? 'Виконано ' + fmtTs(p.doneAt) : 'Виконано раніше'}</span>`);
+  if (done) subs.push(`<span class="it" style="color:var(--success)">${icon('check', 13, 2.6)}${p.doneAt ? 'Виконано ' + fmtTs(p.doneAt) : 'Виконано'}</span>`);
   if (nText) subs.push(`<span class="it">${icon('msg', 13)}${nText} ${plural(nText, 'шаблон', 'шаблони', 'шаблонів')}</span>`);
   if (nFile) subs.push(`<span class="it">${icon('clip', 13)}${nFile}</span>`);
   if (nLink) subs.push(`<span class="it">${icon('link', 13)}${nLink}</span>`);
-  if (!p.done && !p.skipped && due) subs.push(`<span class="due-m">${dueChip(due)}</span>`);
-  return `<div class="task ${p.done ? 'done' : ''} ${p.skipped ? 'skipped' : ''} ${open ? 'open' : ''}" id="task-${t.id}">
+  return `<div class="task ${done ? 'done' : ''} ${t.active ? '' : 'inactive'} ${open ? 'open' : ''}" id="task-${t.id}">
     <div class="task-row" data-act="toggleTask" data-tid="${t.id}">
-      <button class="switch" role="switch" id="sw-${t.id}" aria-checked="${!!p.done}" aria-label="Виконано: ${esc(t.title)}" data-act="toggleDone" data-tid="${t.id}" ${p.skipped ? 'disabled' : ''}></button>
+      <button class="switch" role="switch" id="sw-${t.id}" aria-checked="${!!done}" aria-label="Виконано: ${esc(t.title)}" data-act="toggleDone" data-tid="${t.id}" ${t.active ? '' : 'disabled title="Неактивний для переданих проєктів"'}></button>
       <div class="task-main">
-        <div class="task-title"><span class="tt">${esc(t.title)}</span>${t.custom ? '<span class="badge violet">Лише для проєкту</span>' : ''}${p.skipped ? '<span class="badge">Не потрібно</span>' : ''}</div>
+        <div class="task-title"><span class="tt">${esc(t.title)}</span>${t.active ? '' : '<span class="badge">Лише для нових</span>'}</div>
         ${subs.length ? `<div class="task-sub">${subs.join('')}</div>` : ''}
       </div>
-      <div class="task-meta">
-        ${!p.done && !p.skipped ? dueChip(due) : ''}
-        <button class="icon-btn sm" data-act="taskMenu" data-tid="${t.id}" aria-label="Дії з пунктом">${icon('more', 17)}</button>
-        <span class="chev" style="transform:rotate(${open ? 90 : 0}deg)">${icon('chevR', 16)}</span>
-      </div>
+      <div class="task-meta"><span class="chev" style="transform:rotate(${open ? 90 : 0}deg)">${icon('chevR', 16)}</span></div>
     </div>
-    ${open ? `<div class="task-body">${taskBodyHtml(c, t, p, due)}</div>` : ''}
+    ${open ? `<div class="task-body">${taskBodyHtml(c, t)}</div>` : ''}
   </div>`;
 }
 
@@ -4649,20 +4613,11 @@ function attViewHtml(a, c) {
   return '';
 }
 
-function taskBodyHtml(c, t, p, due) {
-  const auto = t.dueDays !== null && t.dueDays !== undefined && t.dueDays !== '' ? addDays(c.startDate, t.dueDays) : null;
+function taskBodyHtml(c, t) {
+  if (!t.description && !t.attachments.length) return `<p class="task-desc muted" style="margin:0">Без інструкції й матеріалів. Додати їх можна в налаштуваннях воронки.</p>`;
   return `
     ${t.description ? `<p class="task-desc">${esc(t.description)}</p>` : ''}
-    ${t.attachments.length ? `<div class="atts">${t.attachments.map(a => attViewHtml(a, c)).join('')}</div>` : ''}
-    <div class="task-tools">
-      <div class="field">
-        <div class="mini-label">Термін</div>
-        <div class="row">
-          <input type="date" class="input" style="width:170px" value="${esc(due || '')}" data-in="taskDue" data-tid="${t.id}" aria-label="Термін виконання">
-          ${p.due ? `<button class="btn ghost sm" data-act="resetDue" data-tid="${t.id}" title="${auto ? 'Повернути рекомендований: ' + fmtDate(auto) : 'Прибрати термін'}">${icon('undo', 14)}${auto ? 'Рекомендований' : 'Прибрати'}</button>` : ''}
-        </div>
-      </div>
-    </div>`;
+    ${t.attachments.length ? `<div class="atts">${t.attachments.map(a => attViewHtml(a, c)).join('')}</div>` : ''}`;
 }
 
 const HIST = {
@@ -4714,7 +4669,7 @@ function viewSetFlow() {
   return `
     <div class="row wrap" style="align-items:flex-start;margin-bottom:16px">
       <div style="flex:1;min-width:240px"><h2 class="section-title">Флоу етапів</h2>
-        <p class="section-sub" style="margin:0">${st.length} ${plural(st.length, 'етап', 'етапи', 'етапів')} · ${nTasks} ${plural(nTasks, 'пункт', 'пункти', 'пунктів')}. Зміни одразу діють для всіх проєктів, позначений прогрес зберігається.</p></div>
+        <p class="section-sub" style="margin:0">${st.length} ${plural(st.length, 'етап', 'етапи', 'етапів')} · ${nTasks} ${plural(nTasks, 'пункт', 'пункти', 'пунктів')}. Одна воронка для всіх проєктів: зміни діють одразу, позначки зберігаються. Для кожного кроку можна вказати, для кого він — усі, лише нові чи лише передані від іншого АМ.</p></div>
       <button class="btn" data-act="importFlow">${icon('upload', 15)}Імпорт флоу</button>
       <button class="btn primary" data-act="addStage">${icon('plus', 15)}Етап</button>
     </div>
@@ -4729,7 +4684,6 @@ function viewSetFlow() {
             <input class="inline-input" data-in="stTitle" data-sid="${s.id}" value="${esc(s.title)}" aria-label="Назва етапу" placeholder="Назва етапу">
             <input class="inline-input desc" data-in="stDesc" data-sid="${s.id}" value="${esc(s.description)}" placeholder="Короткий опис етапу (необов'язково)" aria-label="Опис етапу">
           </div>
-          ${s.optional ? '<span class="badge violet" title="Вмикається при створенні проєкту">Необов\'язковий</span>' : ''}
           <span class="badge">${s.tasks.length}</span>
           <button class="icon-btn sm" data-act="fsStageMenu" data-sid="${s.id}" aria-label="Дії з етапом">${icon('more', 17)}</button>
         </div>
@@ -4743,7 +4697,7 @@ function viewSetFlow() {
                 ${nT ? `<span class="it" title="Шаблони повідомлень">${icon('msg', 13)}${nT}</span>` : ''}
                 ${nF ? `<span class="it" title="Файли">${icon('clip', 13)}${nF}</span>` : ''}
                 ${nL ? `<span class="it" title="Посилання">${icon('link', 13)}${nL}</span>` : ''}
-                ${t.dueDays !== null && t.dueDays !== undefined ? `<span class="it" title="Рекомендований термін">${icon('clock', 13)}+${t.dueDays} дн.</span>` : ''}
+                ${t.scope !== 'all' ? `<span class="badge ${t.scope === 'transferred' ? 'violet' : 'outline'}" style="height:20px" title="${t.scope === 'transferred' ? 'Активний лише для проєктів, переданих від іншого АМ' : 'Активний лише для нових клієнтів'}">${t.scope === 'transferred' ? 'Передані' : 'Нові'}</span>` : ''}
               </span>
               ${icon('chevR', 15)}
             </div>`; }).join('')}
@@ -4767,9 +4721,9 @@ function renderDrawer() {
       <div class="drawer-body">
         <div class="field"><label class="label" for="t-title">Назва пункту</label><input class="input" id="t-title" data-in="tTitle" value="${esc(t.title)}"></div>
         <div class="field"><label class="label" for="t-desc">Інструкція</label><textarea class="textarea" id="t-desc" data-in="tDesc" rows="3" placeholder="Як саме виконати цей крок, на що звернути увагу">${esc(t.description)}</textarea><div class="hint">Видно на сторінці проєкту, коли розгортаєте пункт.</div></div>
-        <div class="field"><label class="label" for="t-due">Рекомендований термін</label>
-          <div class="row"><input type="number" min="0" max="365" class="input" id="t-due" data-in="tDue" style="width:100px" value="${t.dueDays ?? ''}" placeholder="—"><span class="muted">днів від дати старту проєкту</span></div>
-          <div class="hint">Порожньо — без терміну. 0 — у день старту. На сторінці проєкту термін можна змінити.</div></div>
+        <div class="field"><span class="label">Для яких проєктів</span>
+          <div class="seg">${SCOPES.map(sc => `<button type="button" class="${t.scope === sc.id ? 'on' : ''}" data-act="setScope" data-v="${sc.id}">${sc.label}</button>`).join('')}</div>
+          <div class="hint">${t.scope === 'transferred' ? 'Крок видно лише в проєктах, переданих від іншого АМ.' : t.scope === 'new' ? 'Для проєктів від іншого АМ крок буде сірим і неактивним.' : 'Крок активний і для нових клієнтів, і для переданих від іншого АМ.'}</div></div>
         <div style="border-top:1px solid var(--border);margin:20px 0 16px"></div>
         <div class="row" style="margin-bottom:4px"><div class="section-title" style="font-size:15px">Матеріали</div></div>
         <p class="section-sub" style="font-size:13px">Шаблони повідомлень мовами УКР / РУС / ENG, файли й посилання для цього кроку. На сторінці проєкту поруч буде кнопка «Копіювати».</p>
@@ -4871,7 +4825,7 @@ function viewSetData() {
       <div class="card card-pad">
         <div class="card-title">Резервна копія</div>
         <p class="muted" style="margin:4px 0 14px">Усе разом: флоу, проєкти, позначки й історія. Зберігайте копію раз на тиждень.</p>
-        <label class="row" style="margin-bottom:12px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="bk-files" checked> Разом із файлами</label>
+        <div class="row" style="margin-bottom:12px;font-size:13.5px;gap:10px"><button type="button" class="switch" role="switch" id="bk-files" aria-checked="true" data-act="toggleSw" aria-labelledby="bk-files-l"></button><span id="bk-files-l">Разом із файлами шаблонів</span></div>
         <div class="row wrap"><button class="btn primary sm" data-act="exportBackup">${icon('download', 14)}Експортувати</button><button class="btn sm" data-act="importBackup">${icon('upload', 14)}Відновити з копії</button></div>
       </div>
       <div class="card card-pad">
@@ -4992,6 +4946,7 @@ function render() {
     if (el) { el.focus({ preventScroll: true }); try { if (focus.s != null) el.setSelectionRange(focus.s, focus.e); } catch {} }
   }
   $$('.inline-input.auto', main).forEach(autosize);
+  $$('.stepper', main).forEach(st => { const cur = $('.step.current', st); if (cur && cur.offsetLeft + cur.offsetWidth > st.clientWidth) st.scrollLeft = cur.offsetLeft - 24; stepperFade(st); });
   if (S.ui.scrollTo) {
     const el = document.getElementById(S.ui.scrollTo); S.ui.scrollTo = null;
     if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }));
@@ -5002,6 +4957,20 @@ function autosize(el) { el.style.height = 'auto'; el.style.height = (el.scrollHe
 document.addEventListener('input', e => { if (e.target.matches && e.target.matches('.inline-input.auto')) autosize(e.target); });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && e.target.matches && e.target.matches('textarea[data-single]')) { e.preventDefault(); e.target.blur(); } });
 window.addEventListener('resize', debounce(() => $$('.inline-input.auto').forEach(autosize), 150));
+function stepperFade(el) {
+  const max = el.scrollWidth - el.clientWidth;
+  el.classList.toggle('fl', el.scrollLeft > 2);
+  el.classList.toggle('fr', max > 2 && el.scrollLeft < max - 2);
+}
+document.addEventListener('wheel', e => {
+  const st = e.target.closest && e.target.closest('.stepper'); if (!st) return;
+  const max = st.scrollWidth - st.clientWidth; if (max <= 0) return;
+  const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : 0; if (!d) return;
+  if ((d < 0 && st.scrollLeft <= 0) || (d > 0 && st.scrollLeft >= max)) return;
+  e.preventDefault(); st.scrollLeft += d;
+}, { passive: false });
+document.addEventListener('scroll', e => { if (e.target.classList && e.target.classList.contains('stepper')) stepperFade(e.target); }, true);
+window.addEventListener('resize', () => $$('.stepper').forEach(stepperFade));
 function softRender() {
   const a = document.activeElement;
   if (a && a.matches && a.matches('input:not([type=checkbox]),textarea') ) { S.pendingRender = true; return; }
@@ -5046,20 +5015,21 @@ window.addEventListener('hashchange', () => {
 
 /* ---------- client modals ---------- */
 function clientFormBody(c) {
-  const d = c || { code: '', lang: 'uk', status: 'onboarding', startDate: todayISO() };
-  const optStages = S.settings.stages.filter(s => s.optional);
+  const d = c || { code: '', lang: 'uk', status: 'onboarding', transferred: false };
   return `
-    <div class="field-row">
-      <div class="field"><label class="label" for="cf-code">Шифр проєкту</label><input class="input" id="cf-code" name="code" value="${esc(d.code)}" placeholder="Напр. ABC" style="font-family:var(--mono);text-transform:uppercase" autocomplete="off"></div>
-      <div class="field"><label class="label" for="cf-start">Дата старту</label><input type="date" class="input" id="cf-start" name="startDate" value="${esc(d.startDate)}"></div>
-    </div>
-    <div class="field"><span class="label">Мова комунікації</span>
+    <div class="field"><label class="label" for="cf-code">Шифр проєкту</label><input class="input" id="cf-code" name="code" value="${esc(d.code)}" placeholder="Напр. ABC" style="font-family:var(--mono);text-transform:uppercase" autocomplete="off"></div>
+    <div class="field"><span class="label">Мова шаблонів</span>
       <div class="seg" data-name="lang">${LANGS.map(l => `<button type="button" class="${d.lang === l.id ? 'on' : ''}" data-v="${l.id}">${l.name}</button>`).join('')}</div>
-      <div class="hint">Шаблони повідомлень відкриватимуться цією мовою. Від дати старту рахуються рекомендовані терміни.</div></div>
-    <div class="field"><label class="label" for="cf-status">Статус</label><select class="select" id="cf-status" name="status">${STATUSES.map(s => `<option value="${s.id}" ${d.status === s.id ? 'selected' : ''}>${s.label}</option>`).join('')}</select></div>
-    ${!c && optStages.length ? `<div class="field"><span class="label">Необов'язкові етапи</span>
-      ${optStages.map(s => `<label class="row" style="padding:5px 0;cursor:pointer;font-size:13.5px;align-items:flex-start"><input type="checkbox" name="opt_${s.id}" style="margin-top:3px"><span><b style="font-weight:600">${esc(s.title)}</b>${s.description ? `<br><span class="muted" style="font-size:12.5px">${esc(s.description)}</span>` : ''}</span></label>`).join('')}
-      <div class="hint">Не позначені етапи буде пропущено. Повернути їх можна на сторінці проєкту: ⋯ біля етапу → «Повернути пропущені».</div></div>` : ''}`;
+      <div class="hint">Шаблони повідомлень у воронці відкриватимуться цією мовою.</div></div>
+    <div class="field">
+      <div class="row" style="align-items:flex-start;gap:12px">
+        <button type="button" class="switch" role="switch" aria-checked="${!!d.transferred}" data-toggle="transferred" aria-labelledby="cf-tr-l" style="margin-top:1px"></button>
+        <input type="hidden" name="transferred" value="${d.transferred ? '1' : ''}">
+        <div><div id="cf-tr-l" style="font-weight:600;font-size:13.5px">Переданий від іншого АМ</div>
+        <div class="hint" style="margin-top:2px">Активними будуть лише кроки для переданих проєктів: привітання як новий АМ, ознайомлення з Хабом, зустріч-знайомство. Решта кроків стане сірою.</div></div>
+      </div>
+    </div>
+    ${c ? `<div class="field"><span class="label">Статус</span>${ddHtml('status', d.status, { name: 'status', aria: 'Статус' })}</div>` : ''}`;
 }
 const requireCode = (data, wrap) => {
   const v = (data.code || '').trim().toUpperCase();
@@ -5069,6 +5039,11 @@ const requireCode = (data, wrap) => {
   if (!err && [...S.clients.values()].some(x => x.code === v && (!cur || x.id !== cur.id || !$('.modal h3', wrap).textContent.startsWith('Редагувати')))) err = `Проєкт ${v} уже є`;
   if (!err) return false;
   i.style.borderColor = 'var(--danger)'; i.focus(); i.value = ''; i.placeholder = err; return true;
+};
+
+const DD_PICK = {
+  sort: v => { S.ui.sort = v; saveUi(); render(); },
+  status: v => { const c = curClient(); if (!c || c.status === v) return; const prev = c.status; updateClient(c.id, x => { x.status = v; }, { log: { type: 'status', text: `Статус: ${statusOf(prev).label} → ${statusOf(v).label}` } }); },
 };
 
 /* ---------- actions ---------- */
@@ -5087,8 +5062,7 @@ const ACTIONS = {
       actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Створити проєкт', cls: 'primary', value: 'form', validate: requireCode }],
     });
     if (!data) return;
-    const c = newClient(data);
-    S.settings.stages.filter(s => s.optional && !data['opt_' + s.id]).forEach(s => s.tasks.forEach(t => { c.progress[t.id] = { skipped: true }; }));
+    const c = newClient({ ...data, transferred: !!data.transferred });
     S.clients.set(c.id, c); S.store.saveClient(clone(c));
     toast(`Проєкт ${c.code} створено`);
     go(`#/c/${c.id}`);
@@ -5100,11 +5074,11 @@ const ACTIONS = {
       actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form', validate: requireCode }],
     });
     if (!data) return;
-    const prevStatus = c.status;
+    const prevStatus = c.status, prevTr = c.transferred;
     updateClient(c.id, x => {
       x.code = x.name = (data.code || '').trim().toUpperCase(); x.lang = data.lang || x.lang;
-      x.startDate = data.startDate || x.startDate; x.status = data.status;
-    }, { log: prevStatus !== data.status ? { type: 'status', text: `Статус: ${statusOf(prevStatus).label} → ${statusOf(data.status).label}` } : null });
+      x.status = data.status || x.status; x.transferred = !!data.transferred;
+    }, { log: prevStatus !== data.status ? { type: 'status', text: `Статус: ${statusOf(prevStatus).label} → ${statusOf(data.status).label}` } : prevTr !== !!data.transferred ? { type: 'status', text: data.transferred ? 'Позначено: переданий від іншого АМ' : 'Позначено: новий клієнт' } : null });
     toast('Зміни збережено');
   },
   clientMenu(el) {
@@ -5140,7 +5114,8 @@ const ACTIONS = {
   async toggleDone(el) {
     const c = curClient(); if (!c) return;
     const tid = el.dataset.tid, p = taskState(c, tid), title = taskTitle(c, tid);
-    if (p.skipped) return;
+    const tk = clientStages(c).flatMap(st => st.tasks).find(t => t.id === tid);
+    if (!tk || !tk.active) return;
     const statsOf = () => progressOf(c).stats.find(s => s.stage.tasks.some(t => t.id === tid));
     if (p.done) {
       const ok = await confirmDialog({ title: 'Зняти позначку «Виконано»?', text: `Пункт «${esc(title)}» знову стане невиконаним${p.doneAt ? `, дату виконання (${fmtTs(p.doneAt)}) буде видалено` : ''}.`, confirm: 'Зняти позначку', tone: 'amber', ic: 'undo' });
@@ -5157,56 +5132,18 @@ const ACTIONS = {
     }
     render();
   },
-  taskMenu(el) {
-    const c = curClient(); if (!c) return;
-    const tid = el.dataset.tid, p = taskState(c, tid), title = taskTitle(c, tid);
-    const custom = c.customTasks.find(t => t.id === tid);
-    showMenu(el, [
-      p.skipped
-        ? { label: 'Повернути пункт', icon: 'undo', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: false }; }, { log: { type: 'unskip', text: `Повернуто пункт: «${title}»` } }) }
-        : { label: 'Не потрібно для цього проєкту', icon: 'ban', fn: () => updateClient(c.id, x => { x.progress[tid] = { ...(x.progress[tid] || {}), skipped: true, done: false }; delete x.progress[tid].doneAt; }, { log: { type: 'skip', text: `Не потрібно: «${title}»` } }) },
-      custom ? { label: 'Редагувати пункт', icon: 'edit', fn: () => editCustomTask(c, custom) } : { label: 'Редагувати у флоу', icon: 'sliders', fn: () => { S.ui.settingsTask = tid; go('#/settings/flow'); } },
-      custom ? '-' : null,
-      custom ? { label: 'Видалити пункт', icon: 'trash', danger: true, fn: async () => {
-        if (!await confirmDialog({ title: 'Видалити пункт?', text: `«${esc(custom.title)}» буде видалено з цього проєкту.`, confirm: 'Видалити' })) return;
-        updateClient(c.id, x => { x.customTasks = x.customTasks.filter(t => t.id !== tid); delete x.progress[tid]; }, { log: { type: 'customDel', text: `Видалено пункт «${custom.title}»` } });
-      } } : null,
-    ]);
-  },
   stageMenu(el) {
     const c = curClient(); if (!c) return;
     const st = clientStages(c).find(s => s.id === el.dataset.sid); if (!st) return;
-    const open = st.tasks.filter(t => { const p = taskState(c, t.id); return !p.done && !p.skipped; });
-    const skipped = st.tasks.filter(t => taskState(c, t.id).skipped);
+    const open = st.tasks.filter(t => t.active && !taskState(c, t.id).done);
     showMenu(el, [
       open.length ? { label: 'Позначити все виконаним', icon: 'checkCircle', fn: async () => {
-        if (!await confirmDialog({ title: 'Позначити весь етап виконаним?', text: `${open.length} ${plural(open.length, 'пункт', 'пункти', 'пунктів')} етапу «${esc(st.title)}» буде позначено виконаними сьогоднішньою датою. Зручно для проєктів, які вже давно в роботі.`, confirm: 'Позначити', tone: 'primary', ic: 'checkCircle' })) return;
+        if (!await confirmDialog({ title: 'Позначити весь етап виконаним?', text: `${open.length} ${plural(open.length, 'крок', 'кроки', 'кроків')} етапу «${esc(st.title)}» буде позначено виконаними сьогоднішньою датою.`, confirm: 'Позначити', tone: 'primary', ic: 'checkCircle' })) return;
         updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), done: true, doneAt: Date.now() }; }); }, { log: { type: 'stage', text: `Етап «${st.title}» позначено виконаним` } });
       } } : null,
-      open.length ? { label: 'Пропустити етап для проєкту', icon: 'ban', fn: async () => {
-        if (!await confirmDialog({ title: 'Пропустити етап?', text: `${open.length} ${plural(open.length, 'невиконаний пункт', 'невиконані пункти', 'невиконаних пунктів')} етапу «${esc(st.title)}» буде позначено як «Не потрібно» і не враховуватиметься в прогресі.`, confirm: 'Пропустити', tone: 'amber', ic: 'ban' })) return;
-        updateClient(c.id, x => { open.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: true }; }); }, { log: { type: 'skip', text: `Етап «${st.title}» пропущено` } });
-      } } : null,
-      skipped.length ? { label: `Повернути пропущені (${skipped.length})`, icon: 'undo', fn: () => updateClient(c.id, x => { skipped.forEach(t => { x.progress[t.id] = { ...(x.progress[t.id] || {}), skipped: false }; }); }, { log: { type: 'unskip', text: `Повернуто пропущені пункти етапу «${st.title}»` } }) } : null,
-      { label: 'Додати пункт для проєкту', icon: 'plus', fn: () => ACTIONS.addCustomTask({ dataset: { sid: st.id } }) },
-      '-',
-      { label: 'Редагувати етап у флоу', icon: 'sliders', fn: () => go('#/settings/flow') },
+      { label: 'Редагувати етап у воронці', icon: 'sliders', fn: () => go('#/settings/flow') },
     ]);
   },
-  async addCustomTask(el) {
-    const c = curClient(); if (!c) return;
-    const st = S.settings.stages.find(s => s.id === el.dataset.sid);
-    const data = await openModal({
-      title: 'Пункт лише для цього проєкту', text: st ? `Етап «${esc(st.title)}». У флоу й в інших проєктах він не з'явиться.` : '',
-      body: `<div class="field"><label class="label" for="ct-t">Назва пункту</label><input class="input" id="ct-t" name="title" placeholder="Що потрібно зробити"></div>
-             <div class="field"><label class="label" for="ct-d">Опис</label><textarea class="textarea" id="ct-d" name="description" rows="3" placeholder="Необов'язково"></textarea></div>`,
-      actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Додати', cls: 'primary', value: 'form', validate: (d, w) => { if (d.title.trim()) return false; $('[name=title]', w).focus(); return true; } }],
-    });
-    if (!data) return;
-    const t = { id: uid('ct_'), stageId: el.dataset.sid, title: data.title.trim(), description: data.description.trim() };
-    updateClient(c.id, x => x.customTasks.push(t), { log: { type: 'custom', text: `Додано пункт «${t.title}»` } });
-  },
-
   attLang(el) { S.ui.attLang = S.ui.attLang || {}; S.ui.attLang[el.dataset.aid] = el.dataset.lang; render(); },
   async copyAtt(el) {
     const f = findAtt(el.dataset.aid); if (!f) return;
@@ -5221,12 +5158,6 @@ const ACTIONS = {
     try { toast('Завантажую файл…', { ms: 1500 }); const blob = await S.store.downloadFile(el.dataset.fid); downloadBlob(blob, el.dataset.name || 'file'); }
     catch (e) { toast('Не вдалося завантажити файл: ' + e.message, { error: true }); }
   },
-  resetDue(el) {
-    const c = curClient(); if (!c) return;
-    const tid = el.dataset.tid, title = taskTitle(c, tid);
-    updateClient(c.id, x => { if (x.progress[tid]) delete x.progress[tid].due; }, { log: { type: 'due', text: `Термін «${title}» повернуто до рекомендованого` } });
-  },
-
   /* settings: flow */
   addStage() {
     const id = uid('s_');
@@ -5237,7 +5168,6 @@ const ACTIONS = {
     const sid = el.dataset.sid, idx = S.settings.stages.findIndex(s => s.id === sid), st = S.settings.stages[idx];
     showMenu(el, [
       { label: 'Додати пункт', icon: 'plus', fn: () => ACTIONS.addTask({ dataset: { sid } }) },
-      { label: st.optional ? 'Зробити обов\'язковим' : 'Зробити необов\'язковим', icon: 'ban', fn: () => { const was = st.optional; updateSettings(s => { s.stages.find(x => x.id === sid).optional = !was; }); toast(was ? 'Етап тепер обов\'язковий' : 'Етап необов\'язковий: вмикається галочкою при створенні проєкту'); } },
       idx > 0 ? { label: 'Перемістити вище', icon: 'arrowUp', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx - 1, 0, x); }) } : null,
       idx < S.settings.stages.length - 1 ? { label: 'Перемістити нижче', icon: 'arrowDown', fn: () => updateSettings(s => { const [x] = s.stages.splice(idx, 1); s.stages.splice(idx + 1, 0, x); }) } : null,
       '-',
@@ -5253,13 +5183,15 @@ const ACTIONS = {
   },
   addTask(el) {
     const id = uid('t_');
-    updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); st && st.tasks.push({ id, title: 'Новий пункт', description: '', dueDays: null, attachments: [] }); }, { render: false });
+    updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); st && st.tasks.push({ id, title: 'Новий крок', description: '', scope: 'all', attachments: [] }); }, { render: false });
     S.ui.settingsTask = id; render();
   },
   editTask(el, e) {
     if (e && e.target.closest('[data-drag]')) return;
     S.ui.settingsTask = el.dataset.tid; render();
   },
+  setScope(el) { const f = findTask(S.ui.settingsTask); if (!f) return; updateSettings(() => { f.t.scope = el.dataset.v; }, { render: false }); renderDrawer(); },
+  openDd(el) { const kind = el.dataset.dd; openDd(el, v => DD_PICK[kind] && DD_PICK[kind](v)); },
   closeDrawer: () => closeDrawer(),
   closeDrawerLink: () => { S.ui.settingsTask = null; const w = $('#drawer'); w && w.remove(); },
   async addAtt(el) {
@@ -5328,7 +5260,8 @@ const ACTIONS = {
   delVar(el) { updateSettings(s => s.vars.splice(+el.dataset.i, 1)); },
 
   /* data */
-  exportBackup: () => exportBackup($('#bk-files') ? $('#bk-files').checked : true),
+  exportBackup: () => exportBackup($('#bk-files') ? $('#bk-files').getAttribute('aria-checked') === 'true' : true),
+  toggleSw: el => el.setAttribute('aria-checked', String(el.getAttribute('aria-checked') !== 'true')),
   importBackup: () => importFromFile('backup'),
   exportFlow: () => exportFlow(),
   importFlow: () => importFromFile('flow'),
@@ -5349,7 +5282,6 @@ const INPUTS = {
   stDesc: el => updateSettings(s => { const st = s.stages.find(x => x.id === el.dataset.sid); if (st) st.description = el.value; }, { render: false }),
   tTitle: el => { const f = findTask(S.ui.settingsTask); if (!f) return; updateSettings(() => { f.t.title = el.value; }, { render: false }); const row = $(`.fs-task[data-id="${f.t.id}"] .tt`); if (row) row.textContent = el.value; },
   tDesc: el => { const f = findTask(S.ui.settingsTask); f && updateSettings(() => { f.t.description = el.value; }, { render: false }); },
-  tDue: el => { const f = findTask(S.ui.settingsTask); f && updateSettings(() => { const v = el.value.trim(); f.t.dueDays = v === '' ? null : Math.max(0, Math.min(365, parseInt(v, 10) || 0)); }, { render: false }); },
   aTitle: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.title = el.value; }, { render: false }); },
   aText: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.texts[el.dataset.lang] = el.value; }, { render: false }); },
   aUrl: el => { const f = findAtt(el.dataset.aid); f && updateSettings(() => { f.a.url = el.value.trim(); }, { render: false }); },
@@ -5357,29 +5289,12 @@ const INPUTS = {
   vVal: el => updateSettings(s => { const v = s.vars[+el.dataset.i]; if (v) v.value = el.value; }, { render: false }),
 };
 const CHANGES = {
-  sort: el => { S.ui.sort = el.value; saveUi(); render(); },
-  cstatus: el => { const c = curClient(); if (!c) return; const prev = c.status; updateClient(c.id, x => { x.status = el.value; }, { log: { type: 'status', text: `Статус: ${statusOf(prev).label} → ${statusOf(el.value).label}` } }); },
-  taskDue: el => {
-    const c = curClient(); if (!c) return; const tid = el.dataset.tid, title = taskTitle(c, tid);
-    updateClient(c.id, x => { const q = x.progress[tid] = { ...(x.progress[tid] || {}) }; if (el.value) q.due = el.value; else delete q.due; },
-      { log: { type: 'due', text: el.value ? `Термін «${title}»: ${fmtDate(el.value)}` : `Термін «${title}» прибрано` } });
-  },
-  tDue: () => { const row = S.ui.settingsTask; row && render(); },
 };
-
-async function editCustomTask(c, t) {
-  const data = await openModal({
-    title: 'Редагувати пункт',
-    body: `<div class="field"><label class="label" for="ct-t">Назва пункту</label><input class="input" id="ct-t" name="title" value="${esc(t.title)}"></div>
-           <div class="field"><label class="label" for="ct-d">Опис</label><textarea class="textarea" id="ct-d" name="description" rows="3">${esc(t.description || '')}</textarea></div>`,
-    actions: [{ label: 'Скасувати', cls: 'ghost', value: null }, { label: 'Зберегти', cls: 'primary', value: 'form' }],
-  });
-  if (!data || !data.title.trim()) return;
-  updateClient(c.id, x => { const m = x.customTasks.find(y => y.id === t.id); m.title = data.title.trim(); m.description = data.description.trim(); });
-}
 
 /* ---------- global listeners ---------- */
 document.addEventListener('click', e => {
+  const dd = e.target.closest('[data-dd]');
+  if (dd && !dd.closest('.modal-wrap')) { e.preventDefault(); ACTIONS.openDd(dd); return; }
   const el = e.target.closest('[data-act]'); if (!el) return;
   if (el.closest('.modal-wrap') || el.closest('.auth')) return;
   const fn = ACTIONS[el.dataset.act]; if (!fn) return;
